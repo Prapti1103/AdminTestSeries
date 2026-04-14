@@ -1,0 +1,178 @@
+/* ================= LAYOUT ================= */
+.ant-layout {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  background: #2f75b5 !important;
+  color: white;
+  height: 100vh;
+}
+
+.sidebar .ant-menu {
+  background: transparent;
+  border-right: none;
+}
+
+.sidebar .ant-menu-item {
+  color: #cfe8ff;
+  font-weight: 500;
+  margin: 6px 10px;
+  border-radius: 20px;
+}
+
+.sidebar .ant-menu-item-selected {
+  background: white !important;
+  color: #2f75b5 !important;
+}
+
+/* ================= HEADER ================= */
+/* HEADER HEIGHT FIX */
+.topbar {
+  background: #0F5F8A;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+}
+
+/* ACTIVE TAB */
+.tab.active {
+  background: white;
+  color: black;
+  font-weight: 600;
+}
+
+.header-inner{
+  color: white;
+  font-size: 20px;
+  font-weight: 500;
+}
+/* HEADER INNER */
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* LOGO */
+.logo {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* USER RIGHT */
+.user {
+  display: flex;
+  gap: 10px;
+}
+
+.circle {
+  width: 35px;
+  height: 35px;
+  background: #ffffff55;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+}
+
+/* ================= TABS ================= */
+.top-tabs {
+  display: flex;
+  gap: 30px;
+  background: #2f75b5;
+  padding: 10px 20px;
+  border-radius: 40px;
+  align-items: center;
+}
+
+.tab {
+  background: transparent;
+  color: white;
+  padding: 10px 45px 10px 45px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+/* WRAPPER */
+.tabs-wrapper {
+  background: #f4f6f9;
+  padding: 10px 20px;
+}
+
+.tab.active {
+  background: white;
+  color: black;
+  font-weight: 600;
+}
+
+/* ================= CONTENT ================= */
+.content {
+  width: 100%;
+  background: #f4f6f9;
+  padding: 20px;
+  min-height: calc(100vh - 80px);
+}
+
+/* ================= TABLE ================= */
+.table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* ================= BUTTON BAR ================= */
+.testseries-navbar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  background: #2f75b5;
+  padding: 10px;
+  border-radius: 40px;
+  margin-bottom: 20px;
+}
+
+.testseries-navbar .ant-btn {
+  margin: 0 10px;
+  border-radius: 20px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px !important;
+  }
+
+ /* CENTERED TABS */
+.top-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  background: #2f75b5;
+  padding: 10px 20px;
+  border-radius: 40px;
+  width: fit-content;
+  margin: auto;
+}
+
+
+  .tab {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .content {
+    padding: 10px;
+  }
+}

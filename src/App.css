@@ -1,0 +1,10 @@
+/* CLEAN FILE - REMOVE ALL VITE DEMO CSS */
+
+body {
+  margin: 0;
+}
+
+/* optional small utility */
+.container {
+  width: 100%;
+}
