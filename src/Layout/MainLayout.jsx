@@ -1,21 +1,28 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Layout, Menu } from "antd";
-import { AppstoreOutlined, UserOutlined } from "@ant-design/icons";
+
+import {
+  AppstoreOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+
 import TestSeries from "../TestSeries/TestSeries";
-import "./layout.css";
 import Users from "../TestSeries/Pages/Users";
+
+import "./layout.css";
 
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
 
-  // ✅ CHANGE 1 (default tab)
-  const [activeTab, setActiveTab] = useState("testSeries");
+  // DEFAULT PAGE
+  const [activeTab, setActiveTab] =
+    useState("dashboard");
 
-  const [collapsed, setCollapsed] = useState(true);
-  const siderRef = useRef();
+  const [collapsed, setCollapsed] =
+    useState(true);
 
-  // ✅ TAB MAPPING (NO CHANGE)
+  // TOP NAV TABS
   const tabMap = {
     Dashboard: "dashboard",
     Series: "createTestSeries",
@@ -28,25 +35,15 @@ const MainLayout = () => {
 
   const tabs = Object.keys(tabMap);
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (siderRef.current && !siderRef.current.contains(event.target)) {
-        setCollapsed(true);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+  // SIDEBAR
   const menuItems = [
     {
-      key: "1",
+      key: "testseries",
       icon: <AppstoreOutlined />,
       label: "Test Series",
     },
     {
-      key: "2",
+      key: "users",
       icon: <UserOutlined />,
       label: "Users",
     },
@@ -57,79 +54,115 @@ const MainLayout = () => {
 
       {/* SIDEBAR */}
       <Sider
-        ref={siderRef}
         collapsible
         collapsed={collapsed}
-        onClick={() => setCollapsed(false)}
-        onCollapse={(value) => setCollapsed(value)}
+        onCollapse={(value) =>
+          setCollapsed(value)
+        }
         className="sidebar"
         width={220}
         collapsedWidth={60}
       >
-        <div style={{
-          padding: "20px",
-          fontSize: "20px",
-          fontWeight: "600",
-          color: "white",
-          textAlign: "center",
-          whiteSpace: "nowrap",
-        }}>
-        </div>
 
-        {/* ✅ CHANGE 2 (menu click handler add) */}
         <Menu
           mode="inline"
           items={menuItems}
+          selectedKeys={[
+            activeTab === "users"
+              ? "users"
+              : "testseries",
+          ]}
           onClick={({ key }) => {
-            if (key === "1") setActiveTab("testSeries");
-            if (key === "2") setActiveTab("users");
+
+            if (key === "users") {
+
+              setActiveTab("users");
+
+            } else {
+
+              // OPEN DASHBOARD
+              setActiveTab("dashboard");
+
+            }
           }}
         />
+
       </Sider>
 
       {/* MAIN */}
       <Layout>
 
+        {/* HEADER */}
         <Header className="topbar">
+
           <div className="header-inner">
-            <div>MAHASTUDY</div>
-            <div className="user">
-              <div className="circle">U</div>
+
+            <div className="logo">
+              MAHASTUDY
             </div>
+
+            <div className="user">
+
+              <div className="circle">
+                U
+              </div>
+
+            </div>
+
           </div>
+
         </Header>
 
-        {/* TOP TABS */}
-        <div className="tabs-wrapper">
-          <div className="top-tabs">
-            {tabs.map((tab) => {
-              const value = tabMap[tab];
+        {/* TABS */}
+        {activeTab !== "users" && (
 
-              return (
-                <div
-                  key={tab}
-                  className={`tab ${activeTab === value ? "active" : ""}`}
-                  onClick={() => setActiveTab(value)}
-                >
-                  {tab}
-                </div>
-              );
-            })}
+          <div className="tabs-wrapper">
+
+            <div className="top-tabs">
+
+              {tabs.map((tab) => {
+
+                const value = tabMap[tab];
+
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`tab ${
+                      activeTab === value
+                        ? "active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setActiveTab(value)
+                    }
+                  >
+                    {tab}
+                  </button>
+                );
+              })}
+
+            </div>
+
           </div>
-        </div>
 
-        {/* ✅ CHANGE 3 (content condition render) */}
+        )}
+
+        {/* CONTENT */}
         <Content className="content">
 
-          {activeTab === "testSeries" && (
-            <TestSeries activeTab={activeTab} />
+          {activeTab === "users" ? (
+            <Users />
+          ) : (
+            <TestSeries
+              activeTab={activeTab}
+            />
           )}
-
-          {activeTab === "users" && <Users />}
 
         </Content>
 
       </Layout>
+
     </Layout>
   );
 };

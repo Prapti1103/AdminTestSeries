@@ -2,16 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Card,
-  CardContent,
-  Typography,
   Button,
-  Tablediv,
-  Paper,
   Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
+  Typography,
+  Space,
+  message,
 } from "antd";
 import { getRanking } from "./TestSeriesAPI";
 import Swal from "sweetalert2";
@@ -125,63 +120,44 @@ const RankingByTestPaperId = () => {
     window.open(url, "_blank");
   };
 
+  const columns = [
+    { title: "Rank", dataIndex: "rank", key: "rank" },
+    { title: "Name", dataIndex: "userName", key: "userName" },
+    { title: "Email", dataIndex: "email", key: "email" },
+    { title: "Phone", dataIndex: "contact", key: "contact" },
+    { title: "Score", dataIndex: "totalScore", key: "totalScore" },
+    { title: "Total", dataIndex: "totalMarks", key: "totalMarks" },
+    { title: "Q.", dataIndex: "noOfQuestions", key: "noOfQuestions" },
+    { title: "Correct", dataIndex: "correctQuestions", key: "correctQuestions" },
+    { title: "Incorrect", dataIndex: "incorrectQuestions", key: "incorrectQuestions" },
+    { title: "Unsolved", dataIndex: "unsolvedQuestions", key: "unsolvedQuestions" },
+    { title: "Time", dataIndex: "totalTime", key: "totalTime" },
+  ];
+
   return (
-    <Card sx={{ mt: 3 }}>
-      <CardContent>
-        <Typography variant="h6" align="center" gutterBottom>
-          Results
-        </Typography>
+    <Card style={{ marginTop: 24 }}>
+      <Space style={{ marginBottom: 16 }}>
         <Button
+          type="primary"
+          style={{ backgroundColor: "#0086B9" }}
           onClick={handleBackFromRanking}
-          variant="contained"
-          sx={{ bgcolor: "#0086B9", mb: 2 }}
         >
           Back
         </Button>
         <Button
+          type="primary"
+          style={{ backgroundColor: "#4CAF50" }}
           onClick={handleDownload}
-          variant="contained"
-          sx={{ bgcolor: "#4CAF50", mb: 2, ml: 2 }}
         >
-          Download Pdf
+          Download PDF
         </Button>
-        <Tablediv component={Paper}>
-          <Table size="small" pagination={{ pageSize: 100 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>Rank</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Name</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Phone</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Score</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Total</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Q.</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Correct</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Incorrect</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Unsolved</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>Time</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rankingData.map((rank, index) => (
-                <TableRow key={index}>
-                  <TableCell>{rank.rank}</TableCell>
-                  <TableCell>{rank.userName}</TableCell>
-                  <TableCell>{rank.email}</TableCell>
-                  <TableCell>{rank.contact}</TableCell>
-                  <TableCell>{rank.totalScore}</TableCell>
-                  <TableCell>{rank.totalMarks}</TableCell>
-                  <TableCell>{rank.noOfQuestions}</TableCell>
-                  <TableCell>{rank.correctQuestions}</TableCell>
-                  <TableCell>{rank.incorrectQuestions}</TableCell>
-                  <TableCell>{rank.unsolvedQuestions}</TableCell>
-                  <TableCell>{rank.totalTime}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Tablediv>
-      </CardContent>
+      </Space>
+      <Table 
+        columns={columns} 
+        dataSource={rankingData} 
+        rowKey="rank"
+        pagination={{ pageSize: 100 }} 
+      />
     </Card>
   );
 };

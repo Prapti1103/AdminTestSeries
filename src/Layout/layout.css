@@ -3,7 +3,45 @@
   width: 100%;
   min-height: 100vh;
 }
+.top-tabs {
+  display: flex;
+  gap: 10px;
+  position: relative;
+  z-index: 1000;
+}
+.top-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  flex-wrap: wrap;
+}
 
+.tab {
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 6px;
+  background: #f1f1f1;
+  border: none;
+  outline: none;
+ 
+}
+
+.tab.active {
+  background: #1677ff;
+  color: white;
+}
+.tab {
+  cursor: pointer;
+  padding: 10px 16px;
+  background: #f1f1f1;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.tab.active {
+  background: #1677ff;
+  color: white;
+}
 /* ================= SIDEBAR ================= */
 .sidebar {
   background: #2f75b5 !important;

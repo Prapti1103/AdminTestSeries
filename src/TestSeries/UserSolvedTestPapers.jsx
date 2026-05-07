@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Table, Typography, Spin, Row, Col } from "antd";
-import { getAllSolvedTestPapers } from "../../API/AllApi";
+import { getAllSolvedTestPapers } from "../API/AllApi";
 
 const UserSolvedTestPapers = () => {
   const { userId } = useParams();

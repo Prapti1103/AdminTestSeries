@@ -20,10 +20,9 @@ import { getAllTestpapers } from "./TestSeriesAPI";
 import { useParams } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import logo from "../../img/logo.png";
+// import logo from "../";
 
 const { Title, Text, Paragraph } = Typography;
-const { useBreakpoint } = Grid;
 
 // Message functions similar to the advanced PDF generator
 const showPdfGeneratingMessage = () => {
@@ -56,7 +55,6 @@ const hideMessage = () => {
 
 export default function QuestionsByTestPaperId() {
   const { testPaperId } = useParams();
-  const screens = useBreakpoint();
 
   const [testPaper, setTestPaper] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,7 +69,7 @@ export default function QuestionsByTestPaperId() {
         const found = res.data.find((t) => t.id === parseInt(testPaperId));
         setTestPaper(found || null);
       } catch (err) {
-        setError("Failed to fetch test paper.");
+        setError(err?.message || "Failed to fetch test paper.");
       } finally {
         setLoading(false);
       }
@@ -445,7 +443,7 @@ export default function QuestionsByTestPaperId() {
       const instructionsElement = iframeDocument.querySelector(".instructions");
 
       let currentY = margin;
-      let pageNumber = 1;
+      // let pageNumber = 1;
 
       // Add header to first page
       if (headerElement) {
@@ -514,7 +512,7 @@ export default function QuestionsByTestPaperId() {
         if (currentY + instructionsHeight > contentHeight) {
           pdf.addPage();
           currentY = margin;
-          pageNumber++;
+          // pageNumber++;
         }
 
         pdf.addImage(
@@ -551,7 +549,7 @@ export default function QuestionsByTestPaperId() {
           // Start new page
           pdf.addPage();
           currentY = margin;
-          pageNumber++;
+          // pageNumber++;
         }
 
         // Add question to PDF
@@ -669,7 +667,7 @@ export default function QuestionsByTestPaperId() {
       await generateAndDownloadTestPaper(testPaper, (progress) => {
         setDownloadProgress(progress);
       });
-    } catch (error) {
+    } catch {
       // Error already handled in generateAndDownloadTestPaper
     } finally {
       setDownloadLoading(false);

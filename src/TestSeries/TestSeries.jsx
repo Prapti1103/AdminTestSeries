@@ -5,27 +5,70 @@ import CreateTestPaper from "./CreateTestPaper";
 import CreateTestSeries from "./CreateTestSeries";
 import AddQuestion from "./AddQuestion";
 import SolvedTestPaper from "./SolvedTestPaper";
-import TestSeriesSetting from "./TestSeriesSetting"; 
+import TestSeriesSetting from "./TestSeriesSetting";
 
 const TestSeries = ({ activeTab }) => {
-  return (
-    <div style={{ width: "100%" }}>
 
-      {activeTab === "createTestSeries" && <CreateTestSeries />}
+  console.log("ACTIVE TAB:", activeTab);
 
-      {activeTab === "createTestPaper" && <CreateTestPaper />}
+  switch (activeTab) {
 
-      {activeTab === "createQuestion" && <CreateQuestion />}
+    case "dashboard":
+      return (
+        <div style={{ width: "100%" }}>
+          <h2>Dashboard</h2>
+        </div>
+      );
 
-      {activeTab === "addQuestion" && <AddQuestion />}
+    case "createTestSeries":
+      return (
+        <div style={{ width: "100%" }}>
+          <CreateTestSeries />
+        </div>
+      );
 
-      {activeTab === "solvedTestPaper" && <SolvedTestPaper />}
+    case "createTestPaper":
+      return (
+        <div style={{ width: "100%" }}>
+          <CreateTestPaper />
+        </div>
+      );
 
-      
-      {activeTab === "settings" && <TestSeriesSetting />}
+    case "createQuestion":
+      return (
+        <div style={{ width: "100%" }}>
+          <CreateQuestion />
+        </div>
+      );
 
-    </div>
-  );
+    case "addQuestion":
+      return (
+        <div style={{ width: "100%" }}>
+          <AddQuestion />
+        </div>
+      );
+
+    case "solvedTestPaper":
+      return (
+        <div style={{ width: "100%" }}>
+          <SolvedTestPaper />
+        </div>
+      );
+
+    case "settings":
+      return (
+        <div style={{ width: "100%" }}>
+          <TestSeriesSetting />
+        </div>
+      );
+
+    default:
+      return (
+        <div style={{ width: "100%" }}>
+          <CreateTestSeries />
+        </div>
+      );
+  }
 };
 
 export default TestSeries;

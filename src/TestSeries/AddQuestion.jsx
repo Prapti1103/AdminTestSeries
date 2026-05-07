@@ -38,10 +38,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (
-      error.response &&
-      (error.response.status === 401 || error.response.status === 403)
-    ) {
+    if (error.response && error.response.status === 401) {
       sessionStorage.removeItem("token");
       window.location.href = "/admin";
     }
@@ -64,30 +61,6 @@ const AddQuestion = () => {
   const [testPaperQuestions, setTestPaperQuestions] = useState([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [sectionQuestionCount, setSectionQuestionCount] = useState(null);
-
-  useEffect(() => {
-    fetchTestSeries();
-    fetchSections();
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (selectedTestSeries) fetchTestPapers(selectedTestSeries);
-  }, [selectedTestSeries]);
-
-  useEffect(() => {
-    if (selectedTestPaper) {
-      fetchTestPaperQuestions(selectedTestPaper);
-      fetchQuestionCount(selectedTestPaper);
-    }
-  }, [selectedTestPaper]);
-
-  useEffect(() => {
-    if (selectedSection) {
-      fetchQuestions(selectedSection);
-      fetchSectionQuestionCount(selectedSection);
-    }
-  }, [selectedSection]);
 
   const fetchTestSeries = async () => {
     try {
@@ -154,18 +127,50 @@ const AddQuestion = () => {
       const res = await getQuestionCount(id);
       setQuestionCount(res.data);
     } catch (e) {
-      console.error("Count error:", e);
+      console.error("Question count error:", e);
     }
   };
 
   const fetchSectionQuestionCount = async (section) => {
     try {
-      const res = await api.get(`/questioncountbysection?section=${section}`);
-      setSectionQuestionCount(res.data.count);
+      const token = sessionStorage.getItem("token");
+      const res = await api.get(
+        `/QuestionCountBySections?sectionNames=${section}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setSectionQuestionCount(res.data[section]);
     } catch (e) {
-      console.error("Section count error:", e);
+      console.error("Section question count error:", e);
     }
   };
+
+  useEffect(() => {
+    fetchTestSeries(); // eslint-disable-line
+    fetchSections();
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (selectedTestSeries) {
+      fetchTestPapers(selectedTestSeries); // eslint-disable-line
+    }
+  }, [selectedTestSeries]);
+
+  useEffect(() => {
+    if (selectedTestPaper) {
+      fetchTestPaperQuestions(selectedTestPaper); // eslint-disable-line
+      fetchQuestionCount(selectedTestPaper);
+    }
+  }, [selectedTestPaper]);
+
+  useEffect(() => {
+    if (selectedSection) {
+      fetchQuestions(selectedSection); // eslint-disable-line
+      fetchSectionQuestionCount(selectedSection);
+    }
+  }, [selectedSection]);
 
   const handleQuestionSelect = (id) => {
     setSelectedQuestions((prev) =>
