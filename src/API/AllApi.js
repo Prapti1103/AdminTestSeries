@@ -161,10 +161,7 @@ export const deleteSection = async (id) => {
 // Get All Solved Test Papers
 export const getAllSolvedTestPapers = async (userId) => {
   try {
-    const res = await axios.get(
-      // eslint-disable-next-line no-undef
-      `${ {baseURL}}/solved-testpapers/${userId}`
-    );
+    const res = await api.get(`/solved-testpapers/${userId}`);
     return res;
   } catch (error) {
     console.error("Error fetching solved test papers:", error);

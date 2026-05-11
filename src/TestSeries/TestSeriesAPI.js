@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Use relative path for API calls - Vite proxy will handle routing
 const api = axios.create({
-  baseURL: "",
+  baseURL: "/api",
 });
 
 // Add request interceptor to include token
@@ -138,8 +138,12 @@ export const GetAllCategories = () => {
 
 export const updateVTCategory = (id, data) => {
   console.log("Updating category:", id, data);
-  return api.post("/SaveCategory", { ...data, id }).catch(err => {
-    console.error("Update category error:", err.response?.data || err.message);
+
+  return api.put(`/UpdateCategory/${id}`, data).catch(err => {
+    console.error(
+      "Update category error:",
+      err.response?.data || err.message
+    );
     throw err;
   });
 };
@@ -171,8 +175,12 @@ export const getAllSections = () => {
 
 export const updateSection = (id, data) => {
   console.log("Updating section:", id, data);
-  return api.post("/createSubject", { ...data, id }).catch(err => {
-    console.error("Update section error:", err.response?.data || err.message);
+
+  return api.put(`/updateSubject/${id}`, data).catch(err => {
+    console.error(
+      "Update section error:",
+      err.response?.data || err.message
+    );
     throw err;
   });
 };

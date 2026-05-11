@@ -3,10 +3,9 @@ import { Button, Modal, Form, Input, Table, message } from "antd";
 import Swal from "sweetalert2";
 import { DeleteOutlined} from "@ant-design/icons";
 import {
-  createVTCategory,
-  GetAllCategories,
-  updateVTCategory,
-  deleteVTCategory,
+  createCategory,
+  getAllCategories,
+  deleteCategory,
 } from "./TestSeriesAPI";
 
 const CreateCategory = () => {
@@ -24,7 +23,7 @@ const CreateCategory = () => {
     try {
       setLoading(true);
       console.log("Fetching categories...");
-      const response = await GetAllCategories();
+      const response = await getAllCategories();
       console.log("Categories fetched:", response.data);
       setCategories(response.data);
     } catch (error) {
@@ -59,7 +58,7 @@ const CreateCategory = () => {
     try {
       console.log("Saving category:", values, "Edit mode:", editingId);
       if (editingId) {
-        await updateVTCategory(editingId, values);
+        await updateCategory(editingId, values);
         Swal.fire({
           title: "Success!",
           text: "Category updated successfully",
@@ -67,7 +66,7 @@ const CreateCategory = () => {
           confirmButtonText: "OK",
         });
       } else {
-        await createVTCategory(values);
+        await createCategory(values);
         Swal.fire({
           title: "Success!",
           text: "Category created successfully",
@@ -102,7 +101,7 @@ const CreateCategory = () => {
 
       if (result.isConfirmed) {
         console.log("Deleting category:", id);
-        await deleteVTCategory(id);
+        await deleteCategory(id);
         Swal.fire(
           "Deleted!",
           "Your category has been deleted.",
