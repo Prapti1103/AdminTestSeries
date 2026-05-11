@@ -6,7 +6,6 @@ import {
   Table,
   Typography,
   Space,
-  message,
 } from "antd";
 import { getRanking } from "./TestSeriesAPI";
 import Swal from "sweetalert2";
@@ -23,7 +22,7 @@ const RankingByTestPaperId = () => {
       try {
         const res = await getRanking(testPaperId);
         setRankingData(res.data || []);
-      } catch (error) {
+      } catch {
         Swal.fire("Error!", "Failed to fetch ranking data.", "error");
       }
     };
@@ -45,7 +44,6 @@ const RankingByTestPaperId = () => {
     const pageWidth = doc.internal.pageSize.width;
     const marginLeft = 10; // left margin
     const marginRight = 10; // right margin
-    const usablePageWidth = pageWidth - marginLeft - marginRight;
 
     // Title
     doc.setFontSize(18);

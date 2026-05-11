@@ -15,7 +15,29 @@ const MathLiveInput = ({ value, onChange, placeholder = "Type your question here
   const [isMathMode, setIsMathMode] = useState(false);
   const [currentValue, setCurrentValue] = useState(value || "");
 
+  const handleBeforeInput = (e) => {
+    // Allow space in text mode
+    if (e.inputType === 'insertText' && e.data === ' ') {
+      e.preventDefault();
+      mathFieldRef.current.executeCommand(['insert', '\\;']);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Insert a line break in math mode
+      mathFieldRef.current.executeCommand(['insert', '\\\\']);
+    } else if (e.key === ' ') {
+      e.preventDefault();
+      // Insert proper space
+      mathFieldRef.current.executeCommand(['insert', '\\;']);
+    }
+  };
+
   useEffect(() => {
+    // This syncs the internal state with the prop value for controlled component behavior
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentValue(value || "");
   }, [value]);
 
@@ -44,37 +66,16 @@ const MathLiveInput = ({ value, onChange, placeholder = "Type your question here
       }
 
       // Add event listeners for better text handling
-      mathFieldRef.current.addEventListener('beforeinput', handleBeforeInput);
-      mathFieldRef.current.addEventListener('keydown', handleKeyDown);
+      const mathField = mathFieldRef.current;
+      mathField.addEventListener('beforeinput', handleBeforeInput);
+      mathField.addEventListener('keydown', handleKeyDown);
 
       return () => {
-        if (mathFieldRef.current) {
-          mathFieldRef.current.removeEventListener('beforeinput', handleBeforeInput);
-          mathFieldRef.current.removeEventListener('keydown', handleKeyDown);
-        }
+        mathField.removeEventListener('beforeinput', handleBeforeInput);
+        mathField.removeEventListener('keydown', handleKeyDown);
       };
     }
   }, [isMathMode, currentValue]);
-
-  const handleBeforeInput = (e) => {
-    // Allow space in text mode
-    if (e.inputType === 'insertText' && e.data === ' ') {
-      e.preventDefault();
-      mathFieldRef.current.executeCommand(['insert', '\\;']);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      // Insert a line break in math mode
-      mathFieldRef.current.executeCommand(['insert', '\\\\']);
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      // Insert proper space
-      mathFieldRef.current.executeCommand(['insert', '\\;']);
-    }
-  };
 
   const handleMathInput = (e) => {
     const newValue = e.target.value;

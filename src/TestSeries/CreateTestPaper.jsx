@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Input,
   Button,
@@ -33,27 +32,19 @@ import {
   FileTextOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
-import { jsPDF } from "jspdf";
 import { Link, useNavigate } from "react-router-dom";
-import autoTable from "jspdf-autotable";
 import {
   getAllTestpapers,
-  getAllVTCategories,
+  GetAllCategories,
   getAllTestSeries,
   getTestPapersByTestSeries,
-  getAllSections,
-  updateTestPaper,
-  createTestPaper,
   deleteTestPaper,
   getSolvedCount,
-  getRanking,
   fetchQuestionByTestPaperId,
   uploadTestPaperImage,
   updateTestPaperImage,
   updateShowTestResult,
-  uploadAllResultPdf,
   updateShowAllResult,
-  updateAllResultPdf,
   updateDownloadTestPaper,
 } from "./TestSeriesAPI";
 import AnswerSheetModal from "./AnswerSheetModal";
@@ -62,32 +53,13 @@ const { Option } = Select;
 const { Text } = Typography;
 
 function CreateTestPaper() {
-  const [testPaper, setTestPaper] = useState({
-    testTitle: "",
-    status: true,
-    noOfQuestions: "",
-    totalMarks: "",
-    duration: "",
-    testStartDate: "",
-    testEndDate: "",
-    startTime: "",
-    endTime: "",
-    testSeries: { id: null },
-    sections: [],
-    multipleAttemptsAllowed: false,
-    maxAttemptsAllowed: 1,
-  });
   const navigate = useNavigate();
   const [testPapers, setTestPapers] = useState([]);
   const [testSeriesList, setTestSeriesList] = useState([]);
-  const [sectionsList, setSectionsList] = useState([]);
-  const [rankingData, setRankingData] = useState([]);
-  const [showRanking, setShowRanking] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [selectedSeriesId, setSelectedSeriesId] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [filteredPapers, setFilteredPapers] = useState(testPapers || []);
-  const [form] = Form.useForm();
 
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
   const [selectedTestPaperForAnswers, setSelectedTestPaperForAnswers] =
@@ -137,7 +109,7 @@ function CreateTestPaper() {
         message.success("Image uploaded successfully!");
       }
       fetchTestPapers();
-    } catch (error) {
+    } catch {
       message.error("Failed to upload/update image.");
     }
     setUploadingId(null);
@@ -368,7 +340,6 @@ function CreateTestPaper() {
   useEffect(() => {
     fetchTestPapers();
     fetchTestSeries();
-    fetchSections();
   }, []);
 
   const fetchTestPapers = async () => {
@@ -388,15 +359,6 @@ function CreateTestPaper() {
       setTestSeriesList(response.data);
     } catch (error) {
       console.error("Error fetching test series:", error);
-    }
-  };
-
-  const fetchSections = async () => {
-    try {
-      const response = await getAllSections();
-      setSectionsList(response.data);
-    } catch (error) {
-      console.error("Error fetching sections:", error);
     }
   };
 
@@ -466,7 +428,7 @@ function CreateTestPaper() {
           await deleteTestPaper(id);
           setTestPapers((prev) => prev.filter((item) => item.id !== id));
           message.success("Test paper has been deleted.");
-        } catch (error) {
+        } catch {
           message.error("Failed to delete test paper.");
         }
       },
@@ -482,96 +444,6 @@ function CreateTestPaper() {
       paper.testTitle.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredPapers(filtered);
-  };
-
-  const handleReset = () => {
-    setSearchText("");
-    setFilteredPapers(testPapers);
-  };
-
-  const handleDownload = () => {
-    if (rankingData.length === 0) {
-      message.error("No ranking data available to download.");
-      return;
-    }
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text("Ranking Results", pageWidth / 2, 20, { align: "center" });
-
-    const headers = [
-      [
-        "Rank",
-        "Name",
-        "Email",
-        "Phone",
-        "Total Marks",
-        "Questions",
-        "Score",
-        "Correct",
-        "Incorrect",
-        "Unsolved",
-        "Total Time",
-      ],
-    ];
-
-    const data = rankingData.map((rank) => [
-      rank.rank,
-      rank.userName,
-      rank.email,
-      rank.phoneNo,
-      rank.totalMarks,
-      rank.noOfQuestions,
-      rank.totalScore,
-      rank.correctQuestions,
-      rank.incorrectQuestions,
-      rank.unsolvedQuestions,
-      rank.totalTime,
-    ]);
-
-    autoTable(doc, {
-      head: headers,
-      body: data,
-      startY: 30,
-      styles: {
-        font: "helvetica",
-        fontSize: 10,
-        cellPadding: 3,
-        overflow: "linebreak",
-      },
-      headStyles: {
-        fillColor: [0, 102, 204],
-        textColor: [255, 255, 255],
-        fontSize: 12,
-      },
-      alternateRowStyles: {
-        fillColor: [240, 240, 240],
-      },
-      margin: { top: 30 },
-    });
-
-    doc.save("Ranking_Results.pdf");
-  };
-
-  const handleAllResultPdfUpload = async (file, record) => {
-    const testPaperId = record.id;
-    try {
-      if (record.allResultPdf) {
-        await updateAllResultPdf(testPaperId, file);
-        message.success("PDF updated successfully!");
-      } else {
-        await uploadAllResultPdf(testPaperId, file);
-        message.success("PDF uploaded successfully!");
-      }
-      fetchTestPapers(); // Refresh table data
-    } catch (error) {
-      console.error("Error uploading PDF:", error);
-      message.error("Failed to upload or update PDF.");
-    }
-    return false; // Prevent auto upload behavior
   };
 
   const columns = [
@@ -602,7 +474,7 @@ function CreateTestPaper() {
       title: "Img",
       dataIndex: "image",
       key: "image",
-      render: (image, record) =>
+      render: (image) =>
         image ? (
           <Image
             width={40}
@@ -640,7 +512,6 @@ function CreateTestPaper() {
       ),
     },
     {
-      title: "Result",
       title: "Result",
       dataIndex: "showTestResult",
       key: "showTestResult",

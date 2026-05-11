@@ -23,7 +23,7 @@ import {
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 import {
-  getAllVTCategories,
+  GetAllCategories,
   getAllTestSeries,
   createTestSeries,
   updateTestSeries,
@@ -55,7 +55,7 @@ function CreateTestSeries() {
 
   const fetchCategories = async () => {
     try {
-      const response = await getAllVTCategories();
+      const response = await GetAllCategories();
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -90,7 +90,7 @@ function CreateTestSeries() {
       await fetchTestSeries();
       resetForm();
       setShowForm(false);
-    } catch (error) {
+    } catch {
       message.error("Failed to process request");
     }
   };
@@ -107,7 +107,7 @@ function CreateTestSeries() {
           await deleteTestSeries(id);
           setTestSeriesList((prev) => prev.filter((item) => item.id !== id));
           message.success("Test series has been deleted.");
-        } catch (error) {
+        } catch {
           message.error("Failed to delete test series.");
         }
       },
@@ -147,7 +147,7 @@ function CreateTestSeries() {
         message.success("Image uploaded successfully!");
       }
       await fetchTestSeries();
-    } catch (error) {
+    } catch {
       message.error("Failed to process image");
     }
   };

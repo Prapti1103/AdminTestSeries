@@ -28,7 +28,7 @@ export default function Users() {
   const [districtFilter, setDistrictFilter] = useState("");
 
   // ================= LOAD USERS =================
-  const loadUsers = async () => {
+  const fetchUsers = async () => {
     try {
       const res = await getAllUsers();
 
@@ -51,7 +51,9 @@ export default function Users() {
   };
 
   useEffect(() => {
-    loadUsers();
+    // Fetch users on component mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
   }, []);
 
   // ================= FILTER LOGIC =================
@@ -122,7 +124,7 @@ export default function Users() {
 
       setOpen(false);
       form.resetFields();
-      loadUsers();
+      fetchUsers();
 
     } catch (err) {
       console.error("CREATE ERROR 👉", err?.response?.data || err);

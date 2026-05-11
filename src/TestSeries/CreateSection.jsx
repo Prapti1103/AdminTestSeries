@@ -23,9 +23,12 @@ const CreateSection = () => {
   const fetchSections = async () => {
     try {
       setLoading(true);
+      console.log("Fetching sections...");
       const response = await getAllSections();
+      console.log("Sections fetched:", response.data);
       setSections(response.data);
     } catch (error) {
+      console.error("Error fetching sections:", error);
       message.error("Failed to fetch sections");
     } finally {
       setLoading(false);
@@ -54,6 +57,7 @@ const CreateSection = () => {
 
   const onFinish = async (values) => {
     try {
+      console.log("Saving section:", values, "Edit mode:", editingId);
       if (editingId) {
         await updateSection(editingId, values);
         Swal.fire({
@@ -77,6 +81,7 @@ const CreateSection = () => {
       setEditingId(null);
       fetchSections();
     } catch (error) {
+      console.error("Error saving section:", error);
       message.error(
         error.response?.data?.message || "Failed to save section"
       );
@@ -96,6 +101,7 @@ const CreateSection = () => {
       });
 
       if (result.isConfirmed) {
+        console.log("Deleting section:", id);
         await deleteSection(id);
         Swal.fire(
           "Deleted!",
@@ -105,6 +111,7 @@ const CreateSection = () => {
         fetchSections();
       }
     } catch (error) {
+      console.error("Error deleting section:", error);
       message.error("Failed to delete section");
     }
   };

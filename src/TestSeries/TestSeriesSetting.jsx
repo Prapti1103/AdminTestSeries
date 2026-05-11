@@ -1,3 +1,7 @@
+// ==============================
+// ✅ TestSeriesSetting.jsx
+// ==============================
+
 import React, { useState } from "react";
 import { Card, Tooltip } from "antd";
 import { AppstoreOutlined, BarsOutlined } from "@ant-design/icons";
@@ -5,14 +9,20 @@ import { AppstoreOutlined, BarsOutlined } from "@ant-design/icons";
 import CreateCategory from "./CreateCategory";
 import CreateSection from "./CreateSection";
 
-// ✅ Sidebar items (Ant Design icons)
+// ✅ Sidebar items
 const menuItems = [
   { id: "categories", label: "Test Categories", icon: <AppstoreOutlined /> },
   { id: "sections", label: "Test Sections", icon: <BarsOutlined /> },
 ];
 
 // ✅ Sidebar Component
-const Sidebar = ({ menuItems, activeTab, setActiveTab, isExpanded, setIsExpanded }) => {
+const Sidebar = ({
+  menuItems,
+  activeTab,
+  setActiveTab,
+  isExpanded,
+  setIsExpanded,
+}) => {
   return (
     <div
       style={{
@@ -42,9 +52,12 @@ const Sidebar = ({ menuItems, activeTab, setActiveTab, isExpanded, setIsExpanded
               marginBottom: "10px",
               cursor: "pointer",
               borderRadius: "20px",
-              background: activeTab === item.id ? "white" : "transparent",
-              color: activeTab === item.id ? "#2f75b5" : "white",
-              fontWeight: activeTab === item.id ? "600" : "normal",
+              background:
+                activeTab === item.id ? "white" : "transparent",
+              color:
+                activeTab === item.id ? "#2f75b5" : "white",
+              fontWeight:
+                activeTab === item.id ? "600" : "normal",
             }}
           >
             {item.icon}
@@ -74,9 +87,8 @@ const TestSeriesSetting = () => {
 
   return (
     <div style={{ padding: 20 }}>
-
       <div style={{ display: "flex", gap: "20px" }}>
-
+        
         {/* ✅ Sidebar */}
         <Sidebar
           menuItems={menuItems}
@@ -91,17 +103,15 @@ const TestSeriesSetting = () => {
           <Card
             style={{
               borderRadius: "10px",
-              height:" 100%",
+              height: "100%",
             }}
           >
-            {/* Header */}
-            <h3 style={{ marginBottom: "25px"  }}>
+            <h3 style={{ marginBottom: "25px" }}>
               {activeTab === "categories"
                 ? "Test Categories"
                 : "Test Sections"}
             </h3>
 
-            {/* Content */}
             {renderContent()}
           </Card>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal, Button, Typography, Divider, Card, Row, Col, Spin, message } from 'antd';
 import { FilePdfOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { jsPDF } from 'jspdf';
@@ -509,7 +509,6 @@ const AnswerSheetModal = ({
       const instructionsElement = iframeDocument.querySelector(".instructions");
 
       let currentY = margin;
-      let pageNumber = 1;
 
       // Add header to first page
       if (headerElement) {
@@ -578,7 +577,6 @@ const AnswerSheetModal = ({
         if (currentY + instructionsHeight > contentHeight) {
           pdf.addPage();
           currentY = margin;
-          pageNumber++;
         }
 
         pdf.addImage(
@@ -615,7 +613,6 @@ const AnswerSheetModal = ({
           // Start new page
           pdf.addPage();
           currentY = margin;
-          pageNumber++;
         }
 
         // Add question to PDF

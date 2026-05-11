@@ -1,17 +1,20 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080";
-
+// Use relative path for API calls - Vite proxy will handle routing
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: "",
 });
 
 // Add request interceptor to include token
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
+    console.log("Token in sessionStorage:", token ? `${token.substring(0, 10)}...` : "NO TOKEN");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log("Authorization header set");
+    } else {
+      console.warn("⚠️ NO TOKEN FOUND - User may not be authenticated");
     }
     return config;
   },
@@ -20,13 +23,26 @@ api.interceptors.request.use(
   }
 );
 
-// Add response interceptor to handle token expiration
+// Add response interceptor to handle token expiration and 403 errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
+      console.error("🔴 401 Unauthorized - Token expired");
       sessionStorage.removeItem("token");
-      window.location.href = "/admin";
+      // Only redirect if not in development
+      if (window.location.hostname !== 'localhost') {
+        window.location.href = "/admin";
+      }
+    }
+    if (error.response && error.response.status === 403) {
+      console.error("🔴 403 Forbidden - No valid token or insufficient permissions");
+      // Don't redirect on 403, just reject the error
+      // Only redirect if not in development
+      if (window.location.hostname !== 'localhost') {
+        sessionStorage.removeItem("token");
+        window.location.href = "/admin";
+      }
     }
     return Promise.reject(error);
   }
@@ -71,7 +87,7 @@ export const getAllTestSeriesOrders = () => {
 
 // Category APIs
 export const getAllCategories = () => {
-  return api.get("/AllVTCategories");
+  return api.get("/GetAllCategories");
 };
 
 // Question APIs
@@ -105,36 +121,68 @@ export const removeQuestionsFromTestPaper = (testPaperId, questionIds) => {
 
 // VTCategory APIs
 export const createVTCategory = (data) => {
-  return api.post("/createVTCategory", data);
+  console.log("Creating category with data:", data);
+  return api.post("/SaveCategory", data).catch(err => {
+    console.error("Create category error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
-export const getAllVTCategories = () => {
-  return api.get("/AllVTCategories");
+export const GetAllCategories = () => {
+  console.log("Fetching all categories");
+  return api.get("/GetAllCategories").catch(err => {
+    console.error("Get categories error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 export const updateVTCategory = (id, data) => {
-  return api.put(`/updateVTCategory/${id}`, data);
+  console.log("Updating category:", id, data);
+  return api.post("/SaveCategory", { ...data, id }).catch(err => {
+    console.error("Update category error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 export const deleteVTCategory = (id) => {
-  return api.delete(`/deleteVTCategory/${id}`);
+  console.log("Deleting category:", id);
+  return api.delete(`/DeleteCategory/${id}`).catch(err => {
+    console.error("Delete category error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 // VTSection APIs
 export const createSection = (data) => {
-  return api.post("/createSection", data);
+  console.log("Creating section with data:", data);
+  return api.post("/createSubject", data).catch(err => {
+    console.error("Create section error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 export const getAllSections = () => {
-  return api.get("/AllSections");
+  console.log("Fetching all sections");
+  return api.get("/GetAllSubjects").catch(err => {
+    console.error("Get sections error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 export const updateSection = (id, data) => {
-  return api.put(`/updateSection/${id}`, data);
+  console.log("Updating section:", id, data);
+  return api.post("/createSubject", { ...data, id }).catch(err => {
+    console.error("Update section error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 export const deleteSection = (id) => {
-  return api.delete(`/deleteSection/${id}`);
+  console.log("Deleting section:", id);
+  return api.delete(`/DeleteSubject/${id}`).catch(err => {
+    console.error("Delete section error:", err.response?.data || err.message);
+    throw err;
+  });
 };
 
 // API functions for TestSeries

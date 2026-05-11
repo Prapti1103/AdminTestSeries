@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import { DeleteOutlined} from "@ant-design/icons";
 import {
   createVTCategory,
-  getAllVTCategories,
+  GetAllCategories,
   updateVTCategory,
   deleteVTCategory,
 } from "./TestSeriesAPI";
@@ -23,9 +23,12 @@ const CreateCategory = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await getAllVTCategories();
+      console.log("Fetching categories...");
+      const response = await GetAllCategories();
+      console.log("Categories fetched:", response.data);
       setCategories(response.data);
     } catch (error) {
+      console.error("Error fetching categories:", error);
       message.error("Failed to fetch categories");
     } finally {
       setLoading(false);
@@ -54,6 +57,7 @@ const CreateCategory = () => {
 
   const onFinish = async (values) => {
     try {
+      console.log("Saving category:", values, "Edit mode:", editingId);
       if (editingId) {
         await updateVTCategory(editingId, values);
         Swal.fire({
@@ -77,6 +81,7 @@ const CreateCategory = () => {
       setEditingId(null);
       fetchCategories();
     } catch (error) {
+      console.error("Error saving category:", error);
       message.error(
         error.response?.data?.message || "Failed to save category"
       );
@@ -96,6 +101,7 @@ const CreateCategory = () => {
       });
 
       if (result.isConfirmed) {
+        console.log("Deleting category:", id);
         await deleteVTCategory(id);
         Swal.fire(
           "Deleted!",
@@ -105,6 +111,7 @@ const CreateCategory = () => {
         fetchCategories();
       }
     } catch (error) {
+      console.error("Error deleting category:", error);
       message.error("Failed to delete category");
     }
   };

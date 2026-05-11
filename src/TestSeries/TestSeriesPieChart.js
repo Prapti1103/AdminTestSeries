@@ -78,7 +78,7 @@ const TestSeriesPieChart = () => {
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value, name) => [
+              formatter={(value) => [
                 showRevenue ? `₹${value}` : value,
                 showRevenue ? "Revenue" : "Orders"
               ]}

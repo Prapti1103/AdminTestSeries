@@ -1,8 +1,8 @@
 // TestSeriesLogic.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Swal from "sweetalert2";
 import {
-  getAllVTCategories,
+  GetAllCategories,
   getAllTestSeries,
   createTestSeries,
   updateTestSeries,
@@ -40,7 +40,7 @@ export function useTestSeries() {
   // Fetch categories
   const fetchCategories = async () => {
     try {
-      const response = await getAllVTCategories();
+      const response = await GetAllCategories();
       setCategories(response.data);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -99,7 +99,7 @@ export function useTestSeries() {
       setCreatedTestSeriesId(response.data.id);
       resetForm();
       setShowForm(false);
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Failed to process request", "error");
     }
   };
@@ -118,7 +118,7 @@ export function useTestSeries() {
           await deleteTestSeries(id);
           setTestSeriesList((prev) => prev.filter((item) => item.id !== id));
           Swal.fire("Deleted!", "Test series has been deleted.", "success");
-        } catch (error) {
+        } catch {
           Swal.fire("Error!", "Failed to delete test series.", "error");
         }
       }
@@ -173,7 +173,7 @@ export function useTestSeries() {
         "success"
       );
       await fetchTestSeries();
-    } catch (error) {
+    } catch {
       Swal.fire("Error", "Failed to process image", "error");
     }
   };

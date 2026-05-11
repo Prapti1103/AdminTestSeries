@@ -2,20 +2,15 @@
 
 import {
   getAllTestpapers,
-  getAllVTCategories,
+  GetAllCategories,
   getAllTestSeries,
   getTestPapersByTestSeries,
   getAllSections,
-  updateTestPaper,
-  createTestPaper,
-  deleteTestPaper,
   getSolvedCount,
-  getRanking,
   fetchQuestionByTestPaperId,
-  updateShowTestResult,
 } from "./TestSeriesAPI"; // Adjust path as needed
 
-import { message, Modal } from "antd";
+import { Modal } from "antd";
 
 // Fetch test papers
 export const fetchTestPapers = async (setTestPapers) => {
@@ -51,7 +46,7 @@ export const fetchSections = async (setSectionsList) => {
 export const fetchCategories = async (setCategories, setLoading, message) => {
   try {
     setLoading(true);
-    const response = await getAllVTCategories();
+    const response = await GetAllCategories();
     setCategories(response.data);
   } catch (error) {
     console.error("Error fetching categories:", error);
@@ -102,8 +97,7 @@ export const handleDownloadViewPaper = (
   testPaper,
   questions,
   Swal,
-  jsPDF,
-  autoTable
+  jsPDF
 ) => {
   if (!testPaper) {
     Swal.fire("Error!", "No test paper selected.", "error");
@@ -367,7 +361,7 @@ export const handleSubmitTestPaper = async (
     }
     await fetchTestPapers();
     resetForm();
-  } catch (error) {
+  } catch {
     Swal.fire(
       "Error!",
       `Error ${isEditing ? "updating" : "creating"} Test Paper.`,
@@ -399,7 +393,7 @@ export const handleDeleteTestPaper = async (
         await deleteTestPaper(id);
         setTestPapers((prev) => prev.filter((item) => item.id !== id));
         Swal.fire("Deleted!", "Test paper has been deleted.", "success");
-      } catch (error) {
+      } catch {
         Swal.fire("Error!", "Failed to delete test paper.", "error");
       }
     }
@@ -416,58 +410,7 @@ export const fetchSolvedCount = async (testPaperId, setCount) => {
     } else {
       console.error("Invalid response data:", data);
     }
-  } catch (error) {
-    console.error("Error fetching solved count:", error);
+  } catch (_error) {
+    console.error("Error fetching solved count:", _error);
   }
-};
-
-// getRanking data
-export const fetchRankingData = async (
-  testPaperId,
-  setRankingData,
-  setShowRanking,
-  Swal,
-  getRanking
-) => {
-  try {
-    const response = await getRanking(testPaperId);
-    setRankingData(response.data);
-    setShowRanking(true);
-  } catch (error) {
-    console.error("Error fetching ranking data:", error);
-    Swal.fire("Error!", "Failed to fetch ranking data.", "error");
-  }
-};
-
-const handleShowResultToggle = (record) => {
-  // Show confirmation modal
-  Modal.confirm({
-    title: `Are you sure you want to ${
-      record.showTestResult ? "disable" : "enable"
-    } test result visibility?`,
-    onOk: () => {
-      // Call API to update
-      updateShowTestResult(record.id, !record.showTestResult)
-        .then((response) => {
-          const updatedValue = response.data.showTestResult;
-          // Update local state accordingly
-          setTestPapers((prev) =>
-            prev.map((item) =>
-              item.id === record.id
-                ? { ...item, showTestResult: updatedValue }
-                : item
-            )
-          );
-          message.success(
-            `Test result visibility has been ${
-              updatedValue ? "ENABLED" : "DISABLED"
-            } successfully.`
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-          message.error("Failed to update test result visibility.");
-        });
-    },
-  });
 };

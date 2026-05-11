@@ -67,7 +67,7 @@ const TestPaperForm = () => {
         ]);
         setTestSeriesList(seriesRes.data || []);
         setSectionsList(sectionsRes.data || []);
-      } catch (err) {
+      } catch {
         setTestSeriesList([]);
         setSectionsList([]);
       }
@@ -109,17 +109,16 @@ const TestPaperForm = () => {
             startTime: dayjs(paperData.startTime, "HH:mm"),
             endTime: dayjs(paperData.endTime, "HH:mm"),
           });
-        } catch (err) {
+        } catch {
           Swal.fire("Error!", "Failed to fetch test paper details.", "error");
         }
         setLoading(false);
       };
       fetchTestPaper();
     } else {
-      setTestPaper(defaultTestPaper);
       form.setFieldsValue(defaultTestPaper);
     }
-  }, [isEditing, testPaperId]);
+  }, [isEditing, testPaperId, form]);
 
   const handleChange = (name, value) => {
     setTestPaper((prev) => ({
@@ -138,8 +137,6 @@ const TestPaperForm = () => {
       setLoading(true);
 
       // Combine date and time for LocalDateTime fields
-      const formattedStartTime = `${values.testStartDate}T${values.startTime}:00`;
-      const formattedEndTime = `${values.testEndDate}T${values.endTime}:00`;
 
       const payload = {
         ...values,
@@ -168,7 +165,7 @@ const TestPaperForm = () => {
         Swal.fire("Success!", "Test Paper created successfully!", "success");
       }
       navigate(-1);
-    } catch (error) {
+    } catch {
       message.error(`Error ${isEditing ? "updating" : "creating"} Test Paper.`);
     }
     setLoading(false);

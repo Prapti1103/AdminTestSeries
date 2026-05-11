@@ -40,7 +40,7 @@ const TestSeriesOrderList = () => {
         );
         setOrders(sortedData);
         setFilteredOrders(sortedData);
-      } catch (error) {
+      } catch {
         message.error("Failed to load test series orders.");
       } finally {
         setLoading(false);

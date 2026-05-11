@@ -13,7 +13,6 @@ import {
   Row,
   Col,
   Divider,
-  message,
   Card,
 } from "antd";
 import { DeleteOutlined, UploadOutlined } from "@ant-design/icons";
@@ -21,7 +20,6 @@ import Swal from "sweetalert2";
 import {
   getAllSections,
   getQuestionsCountBySection,
-  getTotalQuestionCount,
   getAllQuestions,
   createQuestion,
   updateQuestion,
@@ -40,7 +38,7 @@ const CreateQuestion = () => {
   const [showForm, setShowForm] = useState(false);
   const [filterSection, setFilterSection] = useState("");
   const [filterType, setFilterType] = useState("");
-  const [questionCount, setQuestionCount] = useState(0);
+  const [questionCount, _setQuestionCount] = useState(0);
   const [sectionCounts, setSectionCounts] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [showOptionE, setShowOptionE] = useState(false);
@@ -49,25 +47,6 @@ const CreateQuestion = () => {
 
   const [pageSize, setPageSize] = useState(1000);
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    getAllSections()
-      .then((res) => {
-        setSections(res.data);
-        fetchCountsBySection(res.data);
-      })
-      .catch(() => Swal.fire("Error", "Failed to fetch sections", "error"));
-
-    fetchQuestions();
-  }, []);
-
-  useEffect(() => {
-    getTotalQuestionCount()
-      .then((res) => setQuestionCount(res.data.totalQuestions))
-      .catch(() =>
-        Swal.fire("Error", "Failed to fetch total questions", "error")
-      );
-  }, []);
 
   const fetchCountsBySection = async (sections) => {
     const counts = {};
@@ -83,6 +62,17 @@ const CreateQuestion = () => {
       .then((res) => setQuestions(res.data))
       .catch(() => Swal.fire("Error", "Failed to fetch questions", "error"));
   };
+
+  useEffect(() => {
+    getAllSections()
+      .then((res) => {
+        setSections(res.data);
+        fetchCountsBySection(res.data);
+      })
+      .catch(() => Swal.fire("Error", "Failed to fetch sections", "error"));
+
+    fetchQuestions();
+  }, []);
 
   const handleFinish = async (values) => {
     const formData = new FormData();
