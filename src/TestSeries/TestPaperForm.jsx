@@ -19,11 +19,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
 import {
-  createTestPaper,
-  updateTestPaper,
+  CreatePaper,
+  UpdatePaper,
   getAllTestSeries,
   getAllSections,
-  getTestPaperById,
+  getPaperById,
 } from "./TestSeriesAPI";
 
 const { Title, Text } = Typography;
@@ -48,7 +48,8 @@ const defaultTestPaper = {
 };
 
 const TestPaperForm = () => {
-  const { testPaperId } = useParams();
+ const params = useParams();
+const testPaperId = params.id || params.testPaperId;
   const navigate = useNavigate();
   const [testPaper, setTestPaper] = useState(defaultTestPaper);
   const [testSeriesList, setTestSeriesList] = useState([]);
@@ -81,7 +82,7 @@ const TestPaperForm = () => {
       const fetchTestPaper = async () => {
         setLoading(true);
         try {
-          const res = await getTestPaperById(testPaperId);
+          const res = await getPaperById(testPaperId);
           const data = res.data;
 
           const paperData = {
@@ -104,10 +105,21 @@ const TestPaperForm = () => {
             ...paperData,
             testSeries: paperData.testSeries.id,
             sections: paperData.sections.map((s) => s.id),
-            testStartDate: dayjs(data.testStartDate),
-            testEndDate: dayjs(data.testEndDate),
-            startTime: dayjs(paperData.startTime, "HH:mm"),
-            endTime: dayjs(paperData.endTime, "HH:mm"),
+           testStartDate: data.testStartDate
+  ? dayjs(data.testStartDate)
+  : null,
+
+testEndDate: data.testEndDate
+  ? dayjs(data.testEndDate)
+  : null,
+
+startTime: paperData.startTime
+  ? dayjs(paperData.startTime, "HH:mm")
+  : null,
+
+endTime: paperData.endTime
+  ? dayjs(paperData.endTime, "HH:mm")
+  : null,
           });
         } catch {
           Swal.fire("Error!", "Failed to fetch test paper details.", "error");
@@ -138,41 +150,96 @@ const TestPaperForm = () => {
 
       // Combine date and time for LocalDateTime fields
 
-      const payload = {
-        ...values,
-        testStartDate: values.testStartDate.format("YYYY-MM-DD"),
-        testEndDate: values.testEndDate.format("YYYY-MM-DD"),
-        startTime: values.startTime.format("YYYY-MM-DDTHH:mm:ss"),
-        endTime: values.endTime.format("YYYY-MM-DDTHH:mm:ss"),
-        multipleAttemptsAllowed: values.multipleAttemptsAllowed,
-        maxAttemptsAllowed: values.multipleAttemptsAllowed
-          ? values.maxAttemptsAllowed
-          : 1,
-        testSeries: { id: values.testSeries },
-        sections: sectionsList.filter((section) =>
-          values.sections.includes(section.id)
-        ),
-        ...(isEditing
-          ? {}
-          : { showTestResult: values.showTestResult || false }),
-      };
+     const payload = {
+  testTitle: values.testTitle,
+
+  noOfQuestions: values.noOfQuestions,
+
+  totalMarks: values.totalMarks,
+
+  duration: values.duration,
+
+  testStartDate: values.testStartDate
+    ? values.testStartDate.format("YYYY-MM-DD")
+    : null,
+
+  testEndDate: values.testEndDate
+    ? values.testEndDate.format("YYYY-MM-DD")
+    : null,
+
+  startTime: values.startTime
+    ? values.startTime.format("HH:mm:ss")
+    : null,
+
+  endTime: values.endTime
+    ? values.endTime.format("HH:mm:ss")
+    : null,
+
+  status: values.status ?? true,
+
+  showTestResult:
+    values.showTestResult ?? false,
+
+  multipleAttemptsAllowed:
+    values.multipleAttemptsAllowed ?? false,
+
+  maxAttemptsAllowed:
+    values.multipleAttemptsAllowed
+      ? values.maxAttemptsAllowed
+      : 1,
+
+  terms: values.terms,
+
+  testSeries: {
+    id: values.testSeries,
+  },
+
+  sections: (values.sections || []).map(
+    (id) => ({ id })
+  ),
+};
+
+      console.log("📤 Submitting payload:", payload);
 
       if (isEditing) {
-        await updateTestPaper(testPaperId, payload);
-        Swal.fire("Success!", "Test Paper updated successfully!", "success");
+        console.log("🔵 Updating test paper:", testPaperId);
+        const response = await UpdatePaper(testPaperId, payload);
+        console.log("✅ Update response:", response);
+        Swal.fire("Success!", "Test Paper updated successfully!", "success").then(() => {
+         navigate("/ebooklayout/test-series-manager/create-test-paper");
+        });
       } else {
-        await createTestPaper(payload);
-        Swal.fire("Success!", "Test Paper created successfully!", "success");
+       console.log("🔵 Creating new test paper");
+
+const finalPayload = {
+  ...payload,
+  name: values.testTitle,
+};
+
+console.log("FINAL PAPER DATA:", finalPayload);
+
+const response = await CreatePaper(finalPayload);
+        console.log("✅ Create response:", response);
+        Swal.fire("Success!", "Test Paper created successfully!", "success").then(() => {
+         navigate("/ebooklayout/test-series-manager/create-test-paper");
+        });
       }
-      navigate(-1);
-    } catch {
-      message.error(`Error ${isEditing ? "updating" : "creating"} Test Paper.`);
+    } catch (error) {
+      console.error("❌ Error submitting test paper:", error);
+      console.error("Error response:", error.response?.data);
+      console.log("FULL ERROR", error);
+
+message.error(
+  error?.response?.data?.message ||
+    error?.response?.data ||
+    error.message
+);
     }
     setLoading(false);
   };
 
   const handleCancel = () => {
-    navigate(-1);
+   navigate("/ebooklayout/test-series-manager/create-test-paper");
   };
 
   return (
@@ -187,20 +254,13 @@ const TestPaperForm = () => {
         level={4}
         style={{ textAlign: "center", marginTop: -5, padding: 1 }}
       >
-        {isEditing ? "Update Test Paper" : ""}
+      {isEditing ? "Update Test Paper" : "Create Test Paper"}
       </Title>
 
       <Form
         form={form}
         layout="vertical"
-        initialValues={{
-          ...testPaper,
-          status: testPaper.status !== undefined ? testPaper.status : true,
-          showTestResult:
-            testPaper.showTestResult !== undefined
-              ? testPaper.showTestResult
-              : false,
-        }}
+       
         onFinish={handleSubmit}
         disabled={loading}
       >
@@ -227,7 +287,7 @@ const TestPaperForm = () => {
               <Select placeholder="Select a Test Series">
                 {testSeriesList.map((series) => (
                   <Select.Option key={series.id} value={series.id}>
-                    {series.examTitle}
+                    {series.examTitle || series.name}
                   </Select.Option>
                 ))}
               </Select>
@@ -256,21 +316,21 @@ const TestPaperForm = () => {
                 }}
               >
                 {sectionsList.length > 0 ? (
-                  sectionsList.map((section) => (
-                    <Select.Option
-                      key={section.id}
-                      value={section.id}
-                      label={section.section}
-                    >
-                      <Checkbox
-                        checked={testPaper.sections.some(
-                          (s) => s.id === section.id
-                        )}
-                      />
-                      {section.section}
-                    </Select.Option>
-                  ))
-                ) : (
+  sectionsList.map((section) => (
+    <Select.Option
+      key={section.id}
+      value={section.id}
+      label={section.name || section.section}
+    >
+      <Checkbox
+        checked={testPaper.sections.some(
+          (s) => s.id === section.id
+        )}
+      />
+      {section.name || section.section}
+    </Select.Option>
+  ))
+) : (
                   <Select.Option disabled value="no-sections">
                     No Sections Available
                   </Select.Option>
@@ -436,25 +496,29 @@ const TestPaperForm = () => {
             </Form.Item>
           </Col>
 
-          {form.getFieldValue("multipleAttemptsAllowed") && (
-            <Col span={4}>
-              <Form.Item
-                label="Max Attempts Allowed"
-                name="maxAttemptsAllowed"
-                rules={[
-                  { required: true, message: "Please enter max attempts" },
-                ]}
-              >
-                <InputNumber
-                  min={1}
-                  style={{ width: "100%" }}
-                  onChange={(value) =>
-                    handleChange("maxAttemptsAllowed", value)
-                  }
-                />
-              </Form.Item>
-            </Col>
-          )}
+          <Form.Item shouldUpdate>
+  {() =>
+    form.getFieldValue("multipleAttemptsAllowed") ? (
+      <Col span={4}>
+        <Form.Item
+          label="Max Attempts Allowed"
+          name="maxAttemptsAllowed"
+          rules={[
+            {
+              required: true,
+              message: "Please enter max attempts",
+            },
+          ]}
+        >
+          <InputNumber
+            min={1}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+      </Col>
+    ) : null
+  }
+</Form.Item>
 
           <Col span={24}>
             <Form.Item

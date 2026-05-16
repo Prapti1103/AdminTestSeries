@@ -16,7 +16,7 @@ import {
   CheckCircleOutlined, 
   LoadingOutlined 
 } from "@ant-design/icons";
-import { getAllTestpapers } from "./TestSeriesAPI";
+import { GetAllPapers } from "./TestSeriesAPI";
 import { useParams } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
@@ -65,7 +65,7 @@ export default function QuestionsByTestPaperId() {
   useEffect(() => {
     const fetchTestPaper = async () => {
       try {
-        const res = await getAllTestpapers();
+        const res = await GetAllPapers();
         const found = res.data.find((t) => t.id === parseInt(testPaperId));
         setTestPaper(found || null);
       } catch (err) {

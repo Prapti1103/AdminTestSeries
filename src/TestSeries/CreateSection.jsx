@@ -1,7 +1,12 @@
+// ==============================
+// ✅ CreateSection.jsx
+// ==============================
+
 import React, { useState, useEffect } from "react";
-import { Button, Modal, Form, Input, Table, message, Spin } from "antd";
+import { Button, Modal, Form, Input, Table, message } from "antd";
 import Swal from "sweetalert2";
-import { LoadingOutlined , DeleteOutlined} from "@ant-design/icons";
+import { DeleteOutlined } from "@ant-design/icons";
+
 import {
   createSection,
   getAllSections,
@@ -11,6 +16,7 @@ import {
 
 const CreateSection = () => {
   const [form] = Form.useForm();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,54 +26,86 @@ const CreateSection = () => {
     fetchSections();
   }, []);
 
+  // ================= FETCH =================
   const fetchSections = async () => {
     try {
       setLoading(true);
+
       console.log("Fetching sections...");
+
       const response = await getAllSections();
+
       console.log("Sections fetched:", response.data);
-      setSections(response.data);
+
+      setSections(response.data || []);
     } catch (error) {
       console.error("Error fetching sections:", error);
+
       message.error("Failed to fetch sections");
     } finally {
       setLoading(false);
     }
   };
 
+  // ================= OPEN MODAL =================
   const showModal = () => {
     setIsModalOpen(true);
+
     setEditingId(null);
+
     form.resetFields();
   };
 
+  // ================= EDIT =================
   const handleEdit = (record) => {
     setIsModalOpen(true);
+
     setEditingId(record.id);
+
     form.setFieldsValue({
-      section: record.section,
+      section: record.name,
     });
   };
 
+  // ================= CLOSE MODAL =================
   const handleCancel = () => {
     setIsModalOpen(false);
+
     form.resetFields();
+
     setEditingId(null);
   };
 
+  // ================= SAVE =================
   const onFinish = async (values) => {
     try {
-      console.log("Saving section:", values, "Edit mode:", editingId);
+      console.log(
+        "Saving section:",
+        values,
+        "Edit mode:",
+        editingId
+      );
+
+      // UPDATE
       if (editingId) {
-        await updateSection(editingId, values);
+        await updateSection(editingId, {
+          name: values.section,
+        });
+
         Swal.fire({
           title: "Success!",
           text: "Section updated successfully",
           icon: "success",
           confirmButtonText: "OK",
         });
-      } else {
-        await createSection(values);
+      }
+
+      // CREATE
+      else {
+        await createSection({
+          name: values.section,
+        });
+
         Swal.fire({
           title: "Success!",
           text: "Section created successfully",
@@ -77,17 +115,23 @@ const CreateSection = () => {
       }
 
       setIsModalOpen(false);
+
       form.resetFields();
+
       setEditingId(null);
+
       fetchSections();
     } catch (error) {
       console.error("Error saving section:", error);
+
       message.error(
-        error.response?.data?.message || "Failed to save section"
+        error.response?.data?.message ||
+          "Failed to save section"
       );
     }
   };
 
+  // ================= DELETE =================
   const handleDelete = async (id) => {
     try {
       const result = await Swal.fire({
@@ -102,40 +146,50 @@ const CreateSection = () => {
 
       if (result.isConfirmed) {
         console.log("Deleting section:", id);
+
         await deleteSection(id);
+
         Swal.fire(
           "Deleted!",
           "Your section has been deleted.",
           "success"
         );
+
         fetchSections();
       }
     } catch (error) {
       console.error("Error deleting section:", error);
+
       message.error("Failed to delete section");
     }
   };
 
+  // ================= TABLE =================
   const columns = [
     {
       title: "ID",
       dataIndex: "id",
       key: "id",
+      width: 100,
     },
+
     {
       title: "Section",
-      dataIndex: "section",
-      key: "section",
+      dataIndex: "name",
+      key: "name",
+
       render: (text, record) => (
         <a onClick={() => handleEdit(record)}>{text}</a>
       ),
     },
+
     {
       title: "Action",
       key: "action",
+      width: 120,
+
       render: (_, record) => (
         <Button
-          
           danger
           icon={<DeleteOutlined />}
           onClick={() => handleDelete(record.id)}
@@ -146,9 +200,17 @@ const CreateSection = () => {
 
   return (
     <div>
-      <Button type="primary" onClick={showModal} style={{ marginBottom: 16 }}>
+      {/* ================= ADD BUTTON ================= */}
+
+      <Button
+        type="primary"
+        onClick={showModal}
+        style={{ marginBottom: 16 }}
+      >
         Add Section
       </Button>
+
+      {/* ================= TABLE ================= */}
 
       <Table
         columns={columns}
@@ -157,21 +219,54 @@ const CreateSection = () => {
         dataSource={[...sections].reverse()}
         rowKey="id"
         loading={loading}
+        pagination={{
+          placement: "bottomRight",
+          pageSize: 10,
+          showSizeChanger: true,
+          pageSizeOptions: [
+            "1",
+            "10",
+            "25",
+            "50",
+            "100",
+            "500",
+            "1000",
+          ],
+
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} of ${total} items`,
+        }}
       />
 
+      {/* ================= MODAL ================= */}
+
       <Modal
-        title={editingId ? "Edit Section" : "Add Section"}
+        title={
+          editingId
+            ? "Edit Section"
+            : "Add Section"
+        }
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
       >
-        <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={onFinish}
+        >
           <Form.Item
             name="section"
             label="Section Name"
-            rules={[{ required: true, message: "Please input the section name!" }]}
+            rules={[
+              {
+                required: true,
+                message:
+                  "Please input the section name!",
+              },
+            ]}
           >
-            <Input />
+            <Input placeholder="Enter section name" />
           </Form.Item>
 
           <Form.Item>

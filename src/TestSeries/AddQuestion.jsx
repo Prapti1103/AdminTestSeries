@@ -1,6 +1,7 @@
-// Converted to Ant Design, logic unchanged
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+
 import {
   Table,
   Typography,
@@ -11,336 +12,860 @@ import {
   message,
   Space,
   Card,
+  Tag,
 } from "antd";
+
 import {
-  getAllCategories,
   getAllSections,
   getQuestionCount,
   getTestPaperQuestions,
   removeQuestionsFromTestPaper,
   addQuestionsToTestPaper,
+  getAllQuestions,
 } from "./TestSeriesAPI";
 
+import { GetAllCategories } from "./TestSeriesAPI";
+
 const { Option } = Select;
+
 const API_URL = "http://localhost:8080";
 
-const api = axios.create({ baseURL: API_URL });
+const api = axios.create({
+  baseURL: API_URL,
+});
 
 api.interceptors.request.use(
   (config) => {
+
     const token = sessionStorage.getItem("token");
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+
+   if (token) {
+  config.headers.Authorization = `Bearer ${token}`;
+}
+
     return config;
   },
+
   (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
   (response) => response,
+
   (error) => {
-    if (error.response && error.response.status === 401) {
+
+    if (
+      error.response &&
+      error.response.status === 401
+    ) {
+
       sessionStorage.removeItem("token");
+
       window.location.href = "/admin";
     }
+
     return Promise.reject(error);
   }
 );
 
 const AddQuestion = () => {
-  const [questions, setQuestions] = useState([]);
-  const [testSeries, setTestSeries] = useState([]);
-  const [testPapers, setTestPapers] = useState([]);
-  const [sections, setSections] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedTestSeries, setSelectedTestSeries] = useState("");
-  const [selectedTestPaper, setSelectedTestPaper] = useState("");
-  const [selectedSection, setSelectedSection] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState([]);
-  const [selectedQuestions, setSelectedQuestions] = useState([]);
-  const [selectedRemoveQuestions, setSelectedRemoveQuestions] = useState([]);
-  const [testPaperQuestions, setTestPaperQuestions] = useState([]);
-  const [questionCount, setQuestionCount] = useState(0);
-  const [sectionQuestionCount, setSectionQuestionCount] = useState(null);
 
-  const fetchTestSeries = async () => {
-    try {
-      const response = await api.get("/AllTestSeriesNames");
-      setTestSeries(response.data);
-    } catch (error) {
-      console.error("Test series error:", error);
-    }
-  };
+  const [questions, setQuestions] =
+    useState([]);
 
+  const [testSeries, setTestSeries] =
+    useState([]);
+
+  const [testPapers, setTestPapers] =
+    useState([]);
+
+  const [sections, setSections] =
+    useState([]);
+
+  const [categories, setCategories] =
+    useState([]);
+
+  const [
+    selectedTestSeries,
+    setSelectedTestSeries,
+  ] = useState("");
+
+  const [
+    selectedTestPaper,
+    setSelectedTestPaper,
+  ] = useState("");
+
+  const [
+    selectedSection,
+    setSelectedSection,
+  ] = useState("");
+
+  const [
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState("");
+
+  const [
+    selectedRemoveQuestions,
+    setSelectedRemoveQuestions,
+  ] = useState([]);
+
+  const [
+    testPaperQuestions,
+    setTestPaperQuestions,
+  ] = useState([]);
+
+  const [
+    questionCount,
+    setQuestionCount,
+  ] = useState(0);
+
+  const [
+    sectionQuestionCount,
+    setSectionQuestionCount,
+  ] = useState(null);
+
+  // FETCH TEST SERIES
+ const fetchTestSeries = async () => {
+
+  try {
+
+    const response = await api.get(
+      "/AllTestSeriesNames"
+    );
+
+    console.log(
+      "TEST SERIES RESPONSE:",
+      response.data
+    );
+
+    const data = Array.isArray(response.data)
+      ? response.data
+      : [];
+
+    setTestSeries(data);
+
+  } catch (error) {
+
+    console.error(
+      "Test series error:",
+      error
+    );
+  }
+};
+
+  // FETCH TEST PAPERS
   const fetchTestPapers = async (id) => {
-    try {
-      const response = await api.get(`/TestPapersByTestSeries/${id}`);
-      setTestPapers(response.data);
-    } catch (error) {
-      console.error("Test papers error:", error);
-    }
-  };
 
+  try {
+
+    const response = await api.get(
+      "/GetAllPapers"
+    );
+
+    console.log(
+      "TEST PAPERS RESPONSE:",
+      response.data
+    );
+
+    const allPapers = Array.isArray(
+      response.data
+    )
+      ? response.data
+      : [];
+
+    const filteredPapers =
+      allPapers.filter(
+
+        (paper) =>
+
+          paper.testSeries?.id == id ||
+
+          paper.testSeriesId == id ||
+
+          paper.testSeries?.testSeriesId == id
+      );
+
+    setTestPapers(filteredPapers);
+
+  } catch (error) {
+
+    console.error(
+      "Test papers error:",
+      error
+    );
+  }
+};
+  // FETCH SECTIONS
   const fetchSections = async () => {
+
     try {
+
       const res = await getAllSections();
+
       setSections(res.data);
+
     } catch (e) {
-      console.error("Sections error:", e);
+
+      console.error(
+        "Sections error:",
+        e
+      );
     }
   };
 
+  // FETCH CATEGORIES
   const fetchCategories = async () => {
+
     try {
-      const res = await getAllCategories();
+
+      const res =
+        await GetAllCategories();
+
       setCategories(res.data);
-    } catch (e) {
-      console.error("Categories error:", e);
-    }
-  };
 
-  const fetchQuestions = async (section) => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const res = await api.get(
-        `/QuestionsBySections?sectionNames=${section}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+    } catch (e) {
+
+      console.error(
+        "Categories error:",
+        e
       );
-      setQuestions(res.data[section] || []);
-    } catch (e) {
-      console.error("Questions error:", e);
     }
   };
 
-  const fetchTestPaperQuestions = async (id) => {
-    try {
-      const res = await getTestPaperQuestions(id);
-      setTestPaperQuestions(res.data);
-    } catch (e) {
-      console.error("TP Questions error:", e);
-    }
-  };
+  // FETCH QUESTIONS
+  const fetchQuestions = async (
+    section
+  ) => {
 
-  const fetchQuestionCount = async (id) => {
     try {
-      const res = await getQuestionCount(id);
-      setQuestionCount(res.data);
-    } catch (e) {
-      console.error("Question count error:", e);
-    }
-  };
 
-  const fetchSectionQuestionCount = async (section) => {
-    try {
-      const token = sessionStorage.getItem("token");
-      const res = await api.get(
-        `/QuestionCountBySections?sectionNames=${section}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const res =
+        await getAllQuestions();
+
+      const filtered =
+        res.data.filter(
+
+          (q) =>
+
+            q.section &&
+            q.section.name === section
+        );
+
+      setQuestions(filtered);
+
+    } catch (e) {
+
+      console.error(
+        "Questions error:",
+        e
       );
-      setSectionQuestionCount(res.data[section]);
-    } catch (e) {
-      console.error("Section question count error:", e);
     }
   };
+
+  // FETCH TEST PAPER QUESTIONS
+  const fetchTestPaperQuestions =
+    async (id) => {
+
+      try {
+
+        const res =
+          await getTestPaperQuestions(
+            id
+          );
+
+        setTestPaperQuestions(
+          res.data
+        );
+
+      } catch (e) {
+
+        console.error(
+          "TP Questions error:",
+          e
+        );
+      }
+    };
+
+  // FETCH TOTAL COUNT
+  const fetchQuestionCount =
+    async (id) => {
+
+      try {
+
+        const res =
+          await getQuestionCount(id);
+
+        setQuestionCount(
+          res.data
+        );
+
+      } catch (e) {
+
+        console.error(
+          "Question count error:",
+          e
+        );
+      }
+    };
+
+  // FETCH SECTION COUNT
+  const fetchSectionQuestionCount =
+    async (section) => {
+
+      try {
+
+        const res =
+          await getAllQuestions();
+
+        const count =
+          res.data.filter(
+
+            (q) =>
+
+              q.section &&
+              q.section.name ===
+                section
+
+          ).length;
+
+        setSectionQuestionCount(
+          count
+        );
+
+      } catch (e) {
+
+        console.error(
+          "Section question count error:",
+          e
+        );
+      }
+    };
 
   useEffect(() => {
-    fetchTestSeries(); // eslint-disable-line
+
+    fetchTestSeries();
+
     fetchSections();
+
     fetchCategories();
+
   }, []);
 
   useEffect(() => {
+
     if (selectedTestSeries) {
-      fetchTestPapers(selectedTestSeries); // eslint-disable-line
+
+      fetchTestPapers(
+        selectedTestSeries
+      );
     }
+
   }, [selectedTestSeries]);
 
   useEffect(() => {
+
     if (selectedTestPaper) {
-      fetchTestPaperQuestions(selectedTestPaper); // eslint-disable-line
-      fetchQuestionCount(selectedTestPaper);
+
+      fetchTestPaperQuestions(
+        selectedTestPaper
+      );
+
+      fetchQuestionCount(
+        selectedTestPaper
+      );
     }
+
   }, [selectedTestPaper]);
 
   useEffect(() => {
+
     if (selectedSection) {
-      fetchQuestions(selectedSection); // eslint-disable-line
-      fetchSectionQuestionCount(selectedSection);
+
+      fetchQuestions(
+        selectedSection
+      );
+
+      fetchSectionQuestionCount(
+        selectedSection
+      );
     }
+
   }, [selectedSection]);
 
-  const handleQuestionSelect = (id) => {
-    setSelectedQuestions((prev) =>
-      prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]
-    );
-  };
+  // AUTO ADD QUESTION
+  const handleQuestionSelect =
+    async (id) => {
 
-  const handleRemoveSelect = (id) => {
-    setSelectedRemoveQuestions((prev) =>
-      prev.includes(id) ? prev.filter((q) => q !== id) : [...prev, id]
-    );
-  };
+      if (!selectedTestPaper) {
 
-  const handleAddQuestionsToTestPaper = async () => {
-    if (!selectedTestPaper || selectedQuestions.length === 0)
-      return alert("Select test paper & questions.");
-    try {
-      await addQuestionsToTestPaper(selectedTestPaper, selectedQuestions);
-      message.success("Questions added successfully.");
-      fetchTestPaperQuestions(selectedTestPaper);
-      fetchQuestionCount(selectedTestPaper);
-      setSelectedQuestions([]);
-    } catch (e) {
-      console.error("Add error:", e);
-      message.error("Failed to add questions.");
-    }
-  };
+        return message.error(
+          "Please select test paper first"
+        );
+      }
 
-  const handleRemoveQuestions = async () => {
-    if (!selectedTestPaper || selectedRemoveQuestions.length === 0)
-      return alert("Select paper and questions.");
-    try {
-      await removeQuestionsFromTestPaper(
-        selectedTestPaper,
-        selectedRemoveQuestions
+      try {
+
+        await addQuestionsToTestPaper(
+          selectedTestPaper,
+          [id]
+        );
+
+        message.success(
+          "Question added successfully"
+        );
+
+        fetchTestPaperQuestions(
+          selectedTestPaper
+        );
+
+        fetchQuestionCount(
+          selectedTestPaper
+        );
+
+      } catch (e) {
+
+        console.error(
+          "Add error:",
+          e
+        );
+
+        message.error(
+          "Failed to add question."
+        );
+      }
+    };
+
+  // REMOVE SELECT
+  const handleRemoveSelect =
+    (id) => {
+
+      setSelectedRemoveQuestions(
+        (prev) =>
+
+          prev.includes(id)
+
+            ? prev.filter(
+                (q) => q !== id
+              )
+
+            : [...prev, id]
       );
-      message.success("Removed successfully.");
-      setSelectedRemoveQuestions([]);
-      fetchTestPaperQuestions(selectedTestPaper);
-      fetchQuestionCount(selectedTestPaper);
-    } catch (e) {
-      console.error("Remove error:", e);
-      message.error("Failed to remove questions.");
-    }
-  };
+    };
+
+  // REMOVE QUESTIONS
+  const handleRemoveQuestions =
+    async () => {
+
+      if (
+        !selectedTestPaper ||
+        selectedRemoveQuestions.length ===
+          0
+      ) {
+
+        return alert(
+          "Select paper and questions."
+        );
+      }
+
+      try {
+
+        await removeQuestionsFromTestPaper(
+          selectedTestPaper,
+          selectedRemoveQuestions
+        );
+
+        message.success(
+          "Removed successfully."
+        );
+
+        setSelectedRemoveQuestions([]);
+
+        fetchTestPaperQuestions(
+          selectedTestPaper
+        );
+
+        fetchQuestionCount(
+          selectedTestPaper
+        );
+
+      } catch (e) {
+
+        console.error(
+          "Remove error:",
+          e
+        );
+
+        message.error(
+          "Failed to remove questions."
+        );
+      }
+    };
 
   return (
+
     <Card style={{ padding: 20 }}>
-      <Space direction="vertical" style={{ width: "100%" }} size="large">
+
+      <Space
+        direction="vertical"
+        style={{ width: "100%" }}
+        size="large"
+      >
+
         <Space wrap>
-          <Select
-            placeholder="Select Category"
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            style={{ width: 200 }}
-          >
-            {categories.map((c) => (
-              <Option key={c.id} value={c.category}>
-                {c.category}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="Select Test Series"
-            value={selectedTestSeries}
-            onChange={setSelectedTestSeries}
-            style={{ width: 200 }}
-          >
-            {testSeries.map((s) => (
-              <Option key={s.id} value={s.id}>
-                {s.examTitle}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="Select Test Paper"
-            value={selectedTestPaper}
-            onChange={setSelectedTestPaper}
-            style={{ width: 200 }}
-          >
-            {testPapers.map((p) => (
-              <Option key={p.id} value={p.id}>
-                {p.testTitle}
-              </Option>
-            ))}
-          </Select>
-          <Select
-            placeholder="Select Section"
-            value={selectedSection}
-            onChange={setSelectedSection}
-            style={{ width: 200 }}
-          >
-            {sections.map((s) => (
-              <Option key={s.id} value={s.section}>
-                {s.section}
-              </Option>
-            ))}
-          </Select>
+
+          {/* CATEGORY */}
+
+          <div>
+
+            <Typography.Text strong>
+              Select Category
+            </Typography.Text>
+
+            <br />
+
+            <Select
+              placeholder="Select Category"
+              value={selectedCategory}
+              onChange={
+                setSelectedCategory
+              }
+              style={{ width: 200 }}
+            >
+
+              {categories.map((c) => (
+
+                <Option
+                  key={c.id}
+                  value={
+                    c.name ||
+                    c.category
+                  }
+                >
+
+                  {c.name ||
+                    c.category}
+
+                </Option>
+
+              ))}
+
+            </Select>
+
+          </div>
+
+          {/* TEST SERIES */}
+
+          <div>
+
+            <Typography.Text strong>
+              Select Test Series
+            </Typography.Text>
+
+            <br />
+
+            <Select
+              placeholder="Select Test Series"
+              value={
+                selectedTestSeries
+              }
+              onChange={
+                setSelectedTestSeries
+              }
+              style={{ width: 220 }}
+            >
+
+              {testSeries.map((s) => (
+
+                <Option
+                  key={s.id}
+                  value={s.id}
+                >
+
+                  {s.examTitle ||
+ s.testSeriesName ||
+ s.title ||
+ s.name ||
+ "Unnamed Series"}
+
+                </Option>
+
+              ))}
+
+            </Select>
+
+          </div>
+
+          {/* TEST PAPER */}
+
+          <div>
+
+            <Typography.Text strong>
+              Select Test Paper
+            </Typography.Text>
+
+            <br />
+
+            <Select
+              placeholder="Select Test Paper"
+              value={
+                selectedTestPaper
+              }
+              onChange={
+                setSelectedTestPaper
+              }
+              style={{ width: 220 }}
+            >
+
+              {testPapers.map((p) => (
+
+                <Option
+                  key={p.id}
+                  value={p.id}
+                >
+
+                 {p.name ||
+ p.paperName ||
+ p.paperTitle ||
+ p.testTitle ||
+ "Unnamed Paper"}
+
+                </Option>
+
+              ))}
+
+            </Select>
+
+          </div>
+
+          {/* SECTION */}
+
+          <div>
+
+            <Typography.Text strong>
+              Select Section
+            </Typography.Text>
+
+            <br />
+
+            <Select
+              placeholder="Select Section"
+              value={
+                selectedSection
+              }
+              onChange={
+                setSelectedSection
+              }
+              style={{ width: 250 }}
+            >
+
+              {sections.map((s) => (
+
+                <Option
+                  key={s.id}
+                  value={s.name}
+                >
+
+                  {s.name ||
+                    s.section}
+
+                </Option>
+
+              ))}
+
+            </Select>
+
+          </div>
+
         </Space>
 
-        <Typography.Title level={5}>Select Questions</Typography.Title>
-        {selectedQuestions.length > 0 && (
-          <Typography>
-            Selected Questions: <b>{selectedQuestions.length}</b>
-          </Typography>
-        )}
+        {/* SECTION COUNT */}
+
         {selectedSection && (
+
           <Typography>
-            Questions available in section <b>{selectedSection}</b>:{" "}
-            {sectionQuestionCount ?? "Loading..."}
+
+            Questions available in
+            section
+
+            <Tag color="blue">
+
+              {selectedSection}
+
+            </Tag>
+
+            :
+            {" "}
+            {sectionQuestionCount ??
+              "Loading..."}
+
           </Typography>
+
         )}
+
+        {/* QUESTION LIST */}
 
         <List
           bordered
-          style={{ maxHeight: 300, overflowY: "auto" }}
+          style={{
+            maxHeight: 300,
+            overflowY: "auto",
+          }}
           dataSource={questions}
           renderItem={(q) => (
-            <List.Item onClick={() => handleQuestionSelect(q.id)}>
+
+            <List.Item
+              onClick={() =>
+                handleQuestionSelect(
+                  q.id
+                )
+              }
+              style={{
+                cursor: "pointer",
+              }}
+            >
+
               <div
-                style={{ display: "flex", alignItems: "center", width: "100%" }}
+                style={{
+                  display: "flex",
+                  alignItems:
+                    "center",
+                  width: "100%",
+                }}
               >
+
                 <Checkbox
-                  checked={selectedQuestions.includes(q.id)}
-                  onChange={() => handleQuestionSelect(q.id)}
+                  checked={false}
                 />
+
                 <span
-                  style={{ marginLeft: 12 }}
-                >{`[${q.id}] ${q.createQuestion}`}</span>
+                  style={{
+                    marginLeft: 12,
+                  }}
+                >
+
+                  [{q.id}]
+                  {" "}
+                  {q.questionText}
+
+                </span>
+
               </div>
+
             </List.Item>
+
           )}
         />
 
-        <Button type="primary" onClick={handleAddQuestionsToTestPaper}>
-          Add Questions To Test Paper
-        </Button>
+        {/* TEST PAPER QUESTIONS */}
 
-        {testPaperQuestions.length > 0 && (
+        {testPaperQuestions.length >
+          0 && (
+
           <>
+
             <Typography.Title level={5}>
-              Total Questions: <b>{questionCount}</b>
+
+              Total Questions:
+              <b>
+                {" "}
+                {questionCount}
+              </b>
+
             </Typography.Title>
+
             <Table
-            size="small"
-              dataSource={testPaperQuestions.sort((a, b) => b.id - a.id)}
+              size="small"
+              dataSource={[
+                ...testPaperQuestions,
+              ].sort(
+                (a, b) =>
+                  b.id - a.id
+              )}
               rowKey="id"
-              pagination={{ pageSize: 100 }}
+              pagination={{
+                pageSize: 100,
+              }}
             >
+
               <Table.Column
                 title="Select"
-                render={(_, record) => (
+                render={(
+                  _,
+                  record
+                ) => (
+
                   <Checkbox
-                    checked={selectedRemoveQuestions.includes(record.id)}
-                    onChange={() => handleRemoveSelect(record.id)}
+                    checked={selectedRemoveQuestions.includes(
+                      record.id
+                    )}
+                    onChange={() =>
+                      handleRemoveSelect(
+                        record.id
+                      )
+                    }
                   />
+
                 )}
               />
-              <Table.Column title="Question ID" dataIndex="id" />
-              <Table.Column title="Question" dataIndex="createQuestion" />
-              <Table.Column title="Section" dataIndex="section" />
+
+              <Table.Column
+                title="Question ID"
+                dataIndex="id"
+              />
+
+              <Table.Column
+                title="Question"
+                dataIndex="questionText"
+              />
+
+              <Table.Column
+                title="Section"
+                render={(
+                  _,
+                  record
+                ) =>
+                  record.section
+                    ?.name ||
+                  "N/A"
+                }
+              />
+
+              <Table.Column
+                title="Paper"
+                render={(
+                  _,
+                  record
+                ) =>
+                  record.paper
+                    ?.name ||
+                  "N/A"
+                }
+              />
+
             </Table>
-            <Button danger onClick={handleRemoveQuestions}>
-              Remove Selected Questions
+
+            <Button
+              danger
+              onClick={
+                handleRemoveQuestions
+              }
+            >
+
+              Remove Selected
+              Questions
+
             </Button>
+
           </>
+
         )}
+
       </Space>
+
     </Card>
   );
 };
 
 export default AddQuestion;
+

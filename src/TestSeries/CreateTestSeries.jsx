@@ -26,7 +26,7 @@ import {
   GetAllCategories,
   getAllTestSeries,
   createTestSeries,
-  updateTestSeries,
+  UpdateTestSeries,
   deleteTestSeries,
   uploadTestSeriesImage,
   updateTestSeriesImage,
@@ -44,7 +44,7 @@ function CreateTestSeries() {
   const [createdTestSeriesId, setCreatedTestSeriesId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [filterCategory, setFilterCategory] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterActive, setFilterActive] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -76,24 +76,94 @@ function CreateTestSeries() {
     }
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      let response;
-      if (selectedTestSeries) {
-        response = await updateTestSeries(selectedTestSeries.id, values);
-        message.success("Test Series Updated!");
-      } else {
-        response = await createTestSeries(values);
-        message.success("Test Series Created!");
-        setCreatedTestSeriesId(response.data.id);
-      }
-      await fetchTestSeries();
-      resetForm();
-      setShowForm(false);
-    } catch {
-      message.error("Failed to process request");
+const handleSubmit = async (values) => {
+  try {
+
+    // Find selected category object
+    const selectedCategory = categories.find(
+      (cat) => cat.name === values.category
+    );
+
+    // Backend payload according to entity
+    const payload = {
+      name: values.name,
+      examType: values.seo || "",
+      durationMinutes: 90,
+
+      active: values.status || false,
+
+      mrp: values.mrp,
+      price: values.pricing,
+
+      description: values.description,
+
+      features: `
+${values.testFeatureOne || ""}
+${values.testFeatureTwo || ""}
+${values.testFeatureThree || ""}
+      `,
+
+      category: {
+        id: selectedCategory?.id,
+      },
+    };
+
+    console.log("FINAL PAYLOAD => ", payload);
+
+    let response;
+
+    if (selectedTestSeries) {
+
+      response = await UpdateTestSeries(
+        selectedTestSeries.id,
+        payload
+      );
+
+      message.success("Test Series Updated!");
+
+    } else {
+
+      response = await createTestSeries(payload);
+
+const newId =
+  response?.data?.id ||
+  response?.data?.data?.id;
+
+console.log("NEW CREATED ID =>", newId);
+
+if (!newId) {
+
+  message.error("ID not received from backend");
+
+  return;
+}
+
+setCreatedTestSeriesId(newId);
+
+message.success("Test Series Created!");
+
+// AUTO IMAGE UPLOAD
+if (imageFile) {
+
+  await uploadImage(newId, false);
+}
+
+setCreatedTestSeriesId(newId);
     }
-  };
+
+    await fetchTestSeries();
+
+    resetForm();
+
+    setShowForm(false);
+
+  } catch (error) {
+
+    console.error("HANDLE SUBMIT ERROR => ", error);
+
+    message.error("Failed to process request");
+  }
+};
 
   const handleDelete = async (id) => {
     Modal.confirm({
@@ -114,129 +184,266 @@ function CreateTestSeries() {
     });
   };
 
-  const handleUpdate = (test) => {
-    setSelectedTestSeries(test);
-    form.setFieldsValue({
-      ...test,
-      status: test.status ? true : false,
-    });
-    setShowForm(true);
-  };
+ const handleUpdate = (test) => {
+
+  setSelectedTestSeries(test);
+
+  form.setFieldsValue({
+
+    seo: test.examType,
+
+    name: test.name,
+
+    pricing: test.price,
+
+    mrp: test.mrp,
+
+    category: test.category?.name,
+
+    active: test.active,
+
+    description: test.description,
+
+    testFeatureOne: test.features?.split("\n")[0] || "",
+
+    testFeatureTwo: test.features?.split("\n")[1] || "",
+
+    testFeatureThree: test.features?.split("\n")[2] || "",
+
+  });
+
+  setShowForm(true);
+};
 
   const resetForm = () => {
     form.resetFields();
     setSelectedTestSeries(null);
     setImageFile(null);
   };
-
   const uploadImage = async (id, isUpdate = false) => {
-    if (!imageFile) {
-      message.error("Please select an image to upload");
-      return;
+
+  console.log("UPLOAD ID =>", id);
+
+  if (!id) {
+
+    message.error("Test Series ID not found");
+
+    return;
+  }
+
+  if (!imageFile) {
+
+    message.error("Please select image");
+
+    return;
+  }
+
+  const formData = new FormData();
+
+  formData.append("image", imageFile);
+
+  try {
+
+    if (isUpdate) {
+
+      await updateTestSeriesImage(id, formData);
+
+      message.success("Image updated successfully!");
+
+    } else {
+
+      await uploadTestSeriesImage(id, formData);
+
+      message.success("Image uploaded successfully!");
     }
 
-    const formData = new FormData();
-    formData.append("image", imageFile);
+    await fetchTestSeries();
 
-    try {
-      if (isUpdate) {
-        await updateTestSeriesImage(id, formData);
-        message.success("Image updated successfully!");
-      } else {
-        await uploadTestSeriesImage(id, formData);
-        message.success("Image uploaded successfully!");
-      }
-      await fetchTestSeries();
-    } catch {
-      message.error("Failed to process image");
-    }
-  };
+  } catch (error) {
+
+    console.error("IMAGE ERROR =>", error);
+
+    message.error("Failed to upload image");
+  }
+};
 
   const beforeUpload = (file) => {
     setImageFile(file);
     return false;
   };
 
-  const filteredTestSeries = testSeriesList.filter((test) => {
-    const categoryMatch = !filterCategory || test.category === filterCategory;
-    const statusMatch =
-      !filterStatus ||
-      (filterStatus === "active" && test.status) ||
-      (filterStatus === "inactive" && !test.status);
-    return categoryMatch && statusMatch;
-  });
+ const filteredTestSeries = testSeriesList.filter((test) => {
 
-  const columns = [
-    {
-      title: "Id",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "Title",
-      dataIndex: "examTitle",
-      key: "examTitle",
-      render: (text, record) => (
-        <Button type="link" onClick={() => handleUpdate(record)}>
-          {text}
+  const categoryMatch =
+    !filterCategory ||
+    test.category?.name === filterCategory;
+
+  const activeMatch =
+    !filterActive ||
+    (filterActive === "active" && test.active) ||
+    (filterActive === "inactive" && !test.active);
+
+  return categoryMatch && activeMatch;
+});
+
+ const columns = [
+  {
+    title: "ID",
+    dataIndex: "id",
+    key: "id",
+    width: 80,
+  },
+
+  {
+    title: "Name",
+    dataIndex: "name",
+    key: "name",
+    render: (text, record) => (
+      <Button type="link" onClick={() => handleUpdate(record)}>
+        {text}
+      </Button>
+    ),
+  },
+
+  {
+    title: "Exam Type",
+    dataIndex: "examType",
+    key: "examType",
+  },
+
+  {
+    title: "Duration",
+    dataIndex: "durationMinutes",
+    key: "durationMinutes",
+    render: (value) => `${value || 0} min`,
+  },
+
+  {
+    title: "Price",
+    dataIndex: "price",
+    key: "price",
+    render: (value) => `₹${value || 0}`,
+  },
+
+  {
+    title: "MRP",
+    dataIndex: "mrp",
+    key: "mrp",
+    render: (value) => `₹${value || 0}`,
+  },
+
+  {
+    title: "Category",
+    key: "category",
+    render: (_, record) => (
+      <span>{record.category?.name || "N/A"}</span>
+    ),
+  },
+
+  {
+    title: "Features",
+    dataIndex: "features",
+    key: "features",
+    width: 250,
+    render: (text) => (
+      <div
+        style={{
+          maxWidth: 250,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {text}
+      </div>
+    ),
+  },
+
+  {
+    title: "Description",
+    dataIndex: "description",
+    key: "description",
+    width: 300,
+    render: (text) => (
+      <div
+        dangerouslySetInnerHTML={{
+          __html:
+            text?.length > 120
+              ? text.substring(0, 120) + "..."
+              : text || "",
+        }}
+      />
+    ),
+  },
+
+  {
+    title: "Active",
+    dataIndex: "active",
+    key: "active",
+    render: (active) => (
+      <span
+        style={{
+          color: active ? "green" : "red",
+          fontWeight: 600,
+        }}
+      >
+        {active ? "Active" : "Inactive"}
+      </span>
+    ),
+  },
+
+  {
+    title: "Created At",
+    dataIndex: "createdAt",
+    key: "createdAt",
+    render: (date) =>
+      date
+        ? new Date(date).toLocaleDateString()
+        : "N/A",
+  },
+
+  {
+    title: "Image",
+    dataIndex: "image",
+    key: "image",
+    render: (text) =>
+      text ? (
+        <img
+          src={text}
+          alt="Test Series"
+          style={{
+            width: 60,
+            height: 60,
+            objectFit: "cover",
+            borderRadius: 8,
+          }}
+        />
+      ) : (
+        <span>No Image</span>
+      ),
+  },
+
+  {
+    title: "Actions",
+    key: "actions",
+    width: 120,
+    render: (_, record) => (
+      <Space>
+        <Button
+          type="primary"
+          onClick={() => handleUpdate(record)}
+        >
+          Edit
         </Button>
-      ),
-    },
-    {
-      title: "Image",
-      dataIndex: "image",
-      key: "image",
-      render: (text) =>
-        text ? (
-          <img
-            src={text}
-            alt="Test Series"
-            style={{
-              width: 60,
-              height: 60,
-              objectFit: "cover",
-              borderRadius: 8,
-            }}
-          />
-        ) : (
-          <span>No Image</span>
-        ),
-    },
-    {
-      title: "Category",
-      dataIndex: "category",
-      key: "category",
-    },
-    {
-      title: "Price",
-      dataIndex: "pricing",
-      key: "pricing",
-    },
-    {
-      title: "Mrp",
-      dataIndex: "mrp",
-      key: "mrp",
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (status ? "Active" : "Inactive"),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space>
-          <Button
-            icon={<DeleteOutlined />}
-            danger
-            onClick={() => handleDelete(record.id)}
-          />
-        </Space>
-      ),
-    },
-  ];
+
+        <Button
+          icon={<DeleteOutlined />}
+          danger
+          onClick={() => handleDelete(record.id)}
+        />
+      </Space>
+    ),
+  },
+];
 
   return (
     <div style={{ padding: 24 }}>
@@ -250,7 +457,7 @@ function CreateTestSeries() {
                 setShowForm(true);
               }}
             >
-              Create Chamipon Series
+              Create Test Series
             </Button>
           </Col>
 
@@ -263,8 +470,8 @@ function CreateTestSeries() {
               allowClear
             >
               {categories.map((cat) => (
-                <Select.Option key={cat.id} value={cat.category}>
-                  {cat.category}
+                <Select.Option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </Select.Option>
               ))}
             </Select>
@@ -274,8 +481,8 @@ function CreateTestSeries() {
             <Select
               placeholder="Filter by Status"
               style={{ width: 200 }}
-              value={filterStatus}
-              onChange={setFilterStatus}
+              value={filterActive}
+              onChange={setFilterActive}
               allowClear
             >
               <Select.Option value="active">Active</Select.Option>
@@ -313,7 +520,7 @@ function CreateTestSeries() {
               </Col>
               <Col span={6}>
                 <Form.Item
-                  name="examTitle"
+                  name="name"
                   label="Test Series Title"
                   rules={[{ required: true, message: "Please input title" }]}
                 >
@@ -351,8 +558,8 @@ function CreateTestSeries() {
                 >
                   <Select>
                     {categories.map((cat) => (
-                      <Select.Option key={cat.id} value={cat.category}>
-                        {cat.category}
+                      <Select.Option key={cat.id} value={cat.name}>
+                        {cat.name}
                       </Select.Option>
                     ))}
                   </Select>
@@ -420,7 +627,7 @@ function CreateTestSeries() {
   plugins: [
     'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
     'searchreplace', 'visualblocks', 'code', 'fullscreen',
-    'insertdatetime', 'media', 'table', 'paste', 'help', 'wordcount'
+    'insertdatetime', 'media', 'table',  'help', 'wordcount'
   ],
 
   // Toolbar with link option
@@ -469,13 +676,14 @@ function CreateTestSeries() {
                 <Button icon={<UploadOutlined />}>Select Image</Button>
               </Upload>
               <Button
-                type="primary"
-                onClick={() =>
-                  uploadImage(
-                    selectedTestSeries?.id || createdTestSeriesId,
-                    !!selectedTestSeries
-                  )
-                }
+  type="primary"
+  onClick={() => {
+
+    if (selectedTestSeries?.id) {
+
+      uploadImage(selectedTestSeries.id, true);
+    }
+  }}
                 style={{ marginTop: 8 }}
                 disabled={!imageFile}
               >

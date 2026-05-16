@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Input,
   Button,
@@ -32,19 +33,27 @@ import {
   FileTextOutlined,
 } from "@ant-design/icons";
 import Swal from "sweetalert2";
+import { jsPDF } from "jspdf";
 import { Link, useNavigate } from "react-router-dom";
+import autoTable from "jspdf-autotable";
 import {
-  getAllTestpapers,
+  GetAllPapers,
   GetAllCategories,
   getAllTestSeries,
   getTestPapersByTestSeries,
-  deleteTestPaper,
+  getAllSections,
+  UpdatePaper,
+  CreatePaper,
+  DeletePaper,
   getSolvedCount,
+  getRanking,
   fetchQuestionByTestPaperId,
   uploadTestPaperImage,
   updateTestPaperImage,
   updateShowTestResult,
+  uploadAllResultPdf,
   updateShowAllResult,
+  updateAllResultPdf,
   updateDownloadTestPaper,
 } from "./TestSeriesAPI";
 import AnswerSheetModal from "./AnswerSheetModal";
@@ -53,13 +62,32 @@ const { Option } = Select;
 const { Text } = Typography;
 
 function CreateTestPaper() {
+  const [testPaper, setTestPaper] = useState({
+    name: "",
+    status: true,
+    noOfQuestions: "",
+    totalMarks: "",
+    durationMinutes: "",
+    testStartDate: "",
+    testEndDate: "",
+    startTime: "",
+    endTime: "",
+    testSeries: { id: null },
+    sections: [],
+    multipleAttemptsAllowed: false,
+    maxAttemptsAllowed: 1,
+  });
   const navigate = useNavigate();
   const [testPapers, setTestPapers] = useState([]);
   const [testSeriesList, setTestSeriesList] = useState([]);
+  const [sectionsList, setSectionsList] = useState([]);
+  const [rankingData, setRankingData] = useState([]);
+  const [showRanking, setShowRanking] = useState(false);
   const [uploadingId, setUploadingId] = useState(null);
   const [selectedSeriesId, setSelectedSeriesId] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [filteredPapers, setFilteredPapers] = useState(testPapers || []);
+  const [form] = Form.useForm();
 
   const [answerSheetVisible, setAnswerSheetVisible] = useState(false);
   const [selectedTestPaperForAnswers, setSelectedTestPaperForAnswers] =
@@ -76,7 +104,7 @@ function CreateTestPaper() {
     setAnswerSheetVisible(true);
 
     try {
-      // First try to use questions from the testPaper object (from getAllTestpapers API)
+      // First try to use questions from the testPaper object (from GetAllPapers API)
       if (testPaper.questions && testPaper.questions.length > 0) {
         setAnswerSheetQuestions(testPaper.questions);
         setLoadingAnswerSheet(false);
@@ -109,7 +137,7 @@ function CreateTestPaper() {
         message.success("Image uploaded successfully!");
       }
       fetchTestPapers();
-    } catch {
+    } catch (error) {
       message.error("Failed to upload/update image.");
     }
     setUploadingId(null);
@@ -340,13 +368,48 @@ function CreateTestPaper() {
   useEffect(() => {
     fetchTestPapers();
     fetchTestSeries();
+    fetchSections();
   }, []);
 
   const fetchTestPapers = async () => {
     try {
-      const response = await getAllTestpapers();
-      const data = Array.isArray(response.data) ? response.data : [];
-      setTestPapers(data);
+      const response = await GetAllPapers();
+     const rawData = Array.isArray(response.data)
+  ? response.data
+  : [];
+
+console.log("TEST PAPERS API RESPONSE:", rawData);
+
+const mappedData = rawData.map((paper) => ({
+  ...paper,
+
+  // attempts
+  multipleAttemptsAllowed: paper.attempt,
+  maxAttemptsAllowed: paper.maxAttempt,
+
+  // result switches
+  showTestResult: paper.result,
+  showAllResult: paper.allResult,
+
+  // download
+  downloadTestPaper: paper.downloadEnabled,
+
+  // status
+  status: paper.active,
+
+  // question count
+  total_questions: paper.totalQuestions,
+
+  // duration
+  durationMinutes: paper.durationMinutes,
+
+  // dates
+  testStartDate: paper.startDate,
+  testEndDate: paper.endDate,
+}));
+
+setTestPapers(mappedData);
+setFilteredPapers(mappedData);
     } catch (error) {
       console.error("Error fetching test papers:", error);
       setTestPapers([]);
@@ -362,13 +425,22 @@ function CreateTestPaper() {
     }
   };
 
+  const fetchSections = async () => {
+    try {
+      const response = await getAllSections();
+      setSectionsList(response.data);
+    } catch (error) {
+      console.error("Error fetching sections:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         let papers = [];
 
         if (selectedSeriesId === "all") {
-          const res = await getAllTestpapers();
+          const res = await GetAllPapers();
           papers = res.data;
         } else if (selectedSeriesId) {
           const res = await getTestPapersByTestSeries(selectedSeriesId);
@@ -425,10 +497,10 @@ function CreateTestPaper() {
       cancelText: "Cancel",
       onOk: async () => {
         try {
-          await deleteTestPaper(id);
+          await DeletePaper(id);
           setTestPapers((prev) => prev.filter((item) => item.id !== id));
           message.success("Test paper has been deleted.");
-        } catch {
+        } catch (error) {
           message.error("Failed to delete test paper.");
         }
       },
@@ -441,9 +513,99 @@ function CreateTestPaper() {
 
   const handleSearch = () => {
     const filtered = testPapers.filter((paper) =>
-      paper.testTitle.toLowerCase().includes(searchText.toLowerCase())
+      paper.name.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredPapers(filtered);
+  };
+
+  const handleReset = () => {
+    setSearchText("");
+    setFilteredPapers(testPapers);
+  };
+
+  const handleDownload = () => {
+    if (rankingData.length === 0) {
+      message.error("No ranking data available to download.");
+      return;
+    }
+
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.width;
+
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Ranking Results", pageWidth / 2, 20, { align: "center" });
+
+    const headers = [
+      [
+        "Rank",
+        "Name",
+        "Email",
+        "Phone",
+        "Total Marks",
+        "Questions",
+        "Score",
+        "Correct",
+        "Incorrect",
+        "Unsolved",
+        "Total Time",
+      ],
+    ];
+
+    const data = rankingData.map((rank) => [
+      rank.rank,
+      rank.userName,
+      rank.email,
+      rank.phoneNo,
+      rank.totalMarks,
+      rank.total_questions,
+      rank.totalScore,
+      rank.correctQuestions,
+      rank.incorrectQuestions,
+      rank.unsolvedQuestions,
+      rank.totalTime,
+    ]);
+
+    autoTable(doc, {
+      head: headers,
+      body: data,
+      startY: 30,
+      styles: {
+        font: "helvetica",
+        fontSize: 10,
+        cellPadding: 3,
+        overflow: "linebreak",
+      },
+      headStyles: {
+        fillColor: [0, 102, 204],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240],
+      },
+      margin: { top: 30 },
+    });
+
+    doc.save("Ranking_Results.pdf");
+  };
+
+  const handleAllResultPdfUpload = async (file, record) => {
+    const testPaperId = record.id;
+    try {
+      if (record.allResultPdf) {
+        await updateAllResultPdf(testPaperId, file);
+        message.success("PDF updated successfully!");
+      } else {
+        await uploadAllResultPdf(testPaperId, file);
+        message.success("PDF uploaded successfully!");
+      }
+      fetchTestPapers(); // Refresh table data
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+      message.error("Failed to upload or update PDF.");
+    }
+    return false; // Prevent auto upload behavior
   };
 
   const columns = [
@@ -455,8 +617,8 @@ function CreateTestPaper() {
     },
     {
       title: "Title",
-      dataIndex: "testTitle",
-      key: "testTitle",
+      dataIndex: "name",
+      key: "name",
       render: (text, record) => (
         <Button
           type="link"
@@ -474,7 +636,7 @@ function CreateTestPaper() {
       title: "Img",
       dataIndex: "image",
       key: "image",
-      render: (image) =>
+      render: (image, record) =>
         image ? (
           <Image
             width={40}
@@ -513,6 +675,7 @@ function CreateTestPaper() {
     },
     {
       title: "Result",
+      title: "Result",
       dataIndex: "showTestResult",
       key: "showTestResult",
       render: (showTestResult, record) => (
@@ -529,8 +692,8 @@ function CreateTestPaper() {
     },
     {
       title: "Noq",
-      dataIndex: "noOfQuestions",
-      key: "noOfQuestions",
+      dataIndex: "total_questions",
+      key: "total_questions",
     },
     {
       title: "Marks",
@@ -539,19 +702,31 @@ function CreateTestPaper() {
     },
     {
       title: "Dur.",
-      dataIndex: "duration",
-      key: "duration",
+      dataIndex: "durationMinutes",
+      key: "durationMinutes",
     },
-    {
-      title: "Start Date",
-      dataIndex: "testStartDate",
-      key: "testStartDate",
-    },
-    {
-      title: "End Date",
-      dataIndex: "testEndDate",
-      key: "testEndDate",
-    },
+   {
+  title: "Start Date",
+  key: "testStartDate",
+  render: (_, record) => {
+    const date = record.testStartDate || record.startDate;
+
+    return date
+      ? new Date(date).toLocaleDateString("en-GB")
+      : "-";
+  },
+},
+{
+  title: "End Date",
+  key: "testEndDate",
+  render: (_, record) => {
+    const date = record.testEndDate || record.endDate;
+
+    return date
+      ? new Date(date).toLocaleDateString("en-GB")
+      : "-";
+  },
+},
     {
       title: "Solved",
       key: "solved",

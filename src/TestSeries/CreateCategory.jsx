@@ -3,11 +3,11 @@ import { Button, Modal, Form, Input, Table, message } from "antd";
 import Swal from "sweetalert2";
 import { DeleteOutlined} from "@ant-design/icons";
 import {
-  createCategory,
-  getAllCategories,
-  deleteCategory,
+  createVTCategory,
+  GetAllCategories,
+  updateVTCategory,
+  deleteVTCategory,
 } from "./TestSeriesAPI";
-
 const CreateCategory = () => {
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,7 +23,7 @@ const CreateCategory = () => {
     try {
       setLoading(true);
       console.log("Fetching categories...");
-      const response = await getAllCategories();
+      const response = await GetAllCategories();
       console.log("Categories fetched:", response.data);
       setCategories(response.data);
     } catch (error) {
@@ -44,8 +44,8 @@ const CreateCategory = () => {
     setIsModalOpen(true);
     setEditingId(record.id);
     form.setFieldsValue({
-      category: record.category,
-    });
+  category: record.name,
+});
   };
 
   const handleCancel = () => {
@@ -58,7 +58,9 @@ const CreateCategory = () => {
     try {
       console.log("Saving category:", values, "Edit mode:", editingId);
       if (editingId) {
-        await updateCategory(editingId, values);
+        await updateVTCategory(editingId, {
+  name: values.category,
+});
         Swal.fire({
           title: "Success!",
           text: "Category updated successfully",
@@ -66,7 +68,9 @@ const CreateCategory = () => {
           confirmButtonText: "OK",
         });
       } else {
-        await createCategory(values);
+        await createVTCategory({
+  name: values.category,
+});
         Swal.fire({
           title: "Success!",
           text: "Category created successfully",
@@ -101,7 +105,7 @@ const CreateCategory = () => {
 
       if (result.isConfirmed) {
         console.log("Deleting category:", id);
-        await deleteCategory(id);
+        await deleteVTCategory(id);
         Swal.fire(
           "Deleted!",
           "Your category has been deleted.",
@@ -122,13 +126,13 @@ const CreateCategory = () => {
       key: "id",
     },
     {
-      title: "Category",
-      dataIndex: "category",
-      key: "category",
-      render: (text, record) => (
-        <a onClick={() => handleEdit(record)}>{text}</a>
-      ),
-    },
+  title: "Category",
+  dataIndex: "name",
+  key: "name",
+  render: (text, record) => (
+    <a onClick={() => handleEdit(record)}>{text}</a>
+  ),
+},
     {
       title: "Action",
       key: "action",
@@ -148,14 +152,30 @@ const CreateCategory = () => {
         Add Category
       </Button>
 
-      <Table
-        columns={columns}
-        bordered
-        size="small"
-        dataSource={[...categories].reverse()}
-        rowKey="id"
-        loading={loading}
-      />
+    <Table
+  columns={columns}
+  bordered
+  size="small"
+  dataSource={[...categories].reverse()}
+  rowKey="id"
+  loading={loading}
+  pagination={{
+    placement: "bottomRight",
+    pageSize: 10,
+    showSizeChanger: true,
+    pageSizeOptions: [
+      "1",
+      "10",
+      "25",
+      "50",
+      "100",
+      "500",
+      "1000",
+    ],
+    showTotal: (total, range) =>
+      `${range[0]}-${range[1]} of ${total} items`,
+  }}
+/>
 
       <Modal
         title={editingId ? "Edit Category" : "Add Category"}

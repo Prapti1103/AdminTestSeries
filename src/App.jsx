@@ -1,5 +1,7 @@
+import { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import MainLayout from "./Layout/MainLayout";
+import AdminLogin from "./TestSeries/AdminLogin";
 import TestPaperForm from "./TestSeries/TestPaperForm";
 import QuestionsByTestPaperId from "./TestSeries/QuestionsByTestPaperId";
 import RankingByTestPaperId from "./TestSeries/RankingByTestPaperId";
@@ -7,6 +9,24 @@ import UserSolvedTestPapers from "./TestSeries/UserSolvedTestPapers";
 
 function AppContent() {
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if token exists in sessionStorage
+    const token = sessionStorage.getItem("token");
+    setIsAuthenticated(!!token);
+    setLoading(false);
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
   const isSpecialRoute = location.pathname.includes('/ebooklayout/test-series-manager/');
 
   if (isSpecialRoute) {

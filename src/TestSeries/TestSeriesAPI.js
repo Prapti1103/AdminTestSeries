@@ -9,13 +9,25 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token");
-    console.log("Token in sessionStorage:", token ? `${token.substring(0, 10)}...` : "NO TOKEN");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log("Authorization header set");
+    const authToken = token?.trim(); // Remove whitespace
+    
+    console.log("🔵 API Request:", config.method.toUpperCase(), config.url);
+    console.log("Token in sessionStorage:", authToken ? `${authToken.substring(0, 20)}...` : "❌ NO TOKEN");
+    
+    if (authToken) {
+      // Check if token already has Bearer prefix
+      const tokenValue = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
+      config.headers.Authorization = tokenValue;
+      console.log("✅ Authorization header set");
     } else {
       console.warn("⚠️ NO TOKEN FOUND - User may not be authenticated");
     }
+    
+    // Ensure Content-Type is set for non-file uploads
+    if (!config.headers["Content-Type"] && !(config.data instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
+    }
+    
     return config;
   },
   (error) => {
@@ -25,25 +37,44 @@ api.interceptors.request.use(
 
 // Add response interceptor to handle token expiration and 403 errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("✅ API Response SUCCESS:", response.config.url, response.status);
+    console.log("Response data:", response.data);
+    return response;
+  },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      console.error("🔴 401 Unauthorized - Token expired");
+    const status = error.response?.status;
+    const url = error.config?.url;
+    const errorMsg = error.response?.data?.message || error.message;
+    
+    console.error(`🔴 HTTP ${status} Error on ${url}:`, errorMsg);
+    console.error("Error details:", error.response?.data);
+    
+    if (status === 401) {
+      console.error("🔴 401 Unauthorized - Token expired or invalid");
       sessionStorage.removeItem("token");
-      // Only redirect if not in development
       if (window.location.hostname !== 'localhost') {
         window.location.href = "/admin";
       }
     }
-    if (error.response && error.response.status === 403) {
+    
+    if (status === 403) {
       console.error("🔴 403 Forbidden - No valid token or insufficient permissions");
-      // Don't redirect on 403, just reject the error
-      // Only redirect if not in development
+      console.error("Response data:", error.response?.data);
+      
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        console.error("⚠️ No token found in sessionStorage! User needs to login.");
+      } else {
+        console.error("Token exists but was rejected. Check if token is valid or expired.");
+      }
+      
       if (window.location.hostname !== 'localhost') {
         sessionStorage.removeItem("token");
         window.location.href = "/admin";
       }
     }
+    
     return Promise.reject(error);
   }
 );
@@ -86,9 +117,7 @@ export const getAllTestSeriesOrders = () => {
 };
 
 // Category APIs
-export const getAllCategories = () => {
-  return api.get("/GetAllCategories");
-};
+
 
 // Question APIs
 export const getQuestionsBySection = (section) => {
@@ -122,7 +151,7 @@ export const removeQuestionsFromTestPaper = (testPaperId, questionIds) => {
 // VTCategory APIs
 export const createVTCategory = (data) => {
   console.log("Creating category with data:", data);
-  return api.post("/SaveCategory", data).catch(err => {
+  return api.post("/categories/SaveCategory", data).catch(err => {
     console.error("Create category error:", err.response?.data || err.message);
     throw err;
   });
@@ -130,7 +159,7 @@ export const createVTCategory = (data) => {
 
 export const GetAllCategories = () => {
   console.log("Fetching all categories");
-  return api.get("/GetAllCategories").catch(err => {
+  return api.get("/categories/GetAllCategories").catch(err => {
     console.error("Get categories error:", err.response?.data || err.message);
     throw err;
   });
@@ -139,7 +168,7 @@ export const GetAllCategories = () => {
 export const updateVTCategory = (id, data) => {
   console.log("Updating category:", id, data);
 
-  return api.put(`/UpdateCategory/${id}`, data).catch(err => {
+  return api.put(`/categories/UpdateCategory/${id}`, data).catch(err => {
     console.error(
       "Update category error:",
       err.response?.data || err.message
@@ -150,7 +179,7 @@ export const updateVTCategory = (id, data) => {
 
 export const deleteVTCategory = (id) => {
   console.log("Deleting category:", id);
-  return api.delete(`/DeleteCategory/${id}`).catch(err => {
+  return api.delete(`/categories/DeleteCategory/${id}`).catch(err => {
     console.error("Delete category error:", err.response?.data || err.message);
     throw err;
   });
@@ -158,52 +187,32 @@ export const deleteVTCategory = (id) => {
 
 // VTSection APIs
 export const createSection = (data) => {
-  console.log("Creating section with data:", data);
-  return api.post("/createSubject", data).catch(err => {
-    console.error("Create section error:", err.response?.data || err.message);
-    throw err;
-  });
+  return api.post("/sections", data);
 };
 
 export const getAllSections = () => {
-  console.log("Fetching all sections");
-  return api.get("/GetAllSubjects").catch(err => {
-    console.error("Get sections error:", err.response?.data || err.message);
-    throw err;
-  });
+  return api.get("/sections");
 };
 
 export const updateSection = (id, data) => {
-  console.log("Updating section:", id, data);
-
-  return api.put(`/updateSubject/${id}`, data).catch(err => {
-    console.error(
-      "Update section error:",
-      err.response?.data || err.message
-    );
-    throw err;
-  });
+  return api.put(`/sections/${id}`, data);
 };
 
 export const deleteSection = (id) => {
-  console.log("Deleting section:", id);
-  return api.delete(`/DeleteSubject/${id}`).catch(err => {
-    console.error("Delete section error:", err.response?.data || err.message);
-    throw err;
-  });
+  return api.delete(`/sections/${id}`);
 };
 
 // API functions for TestSeries
 export const getAllTestSeries = () => {
-  return api.get("/AllTestSeries");
+  return api.get("/getAllTestSeries");
 };
 
 export const createTestSeries = (data) => {
   return api.post("/createTestSeries", data);
 };
 
-export const updateTestSeries = (id, data) => {
-  return api.put(`/updateTestSeries/${id}`, data);
+export const UpdateTestSeries = (id, data) => {
+  return api.put(`/UpdateTestSeries/${id}`, data);
 };
 
 export const deleteTestSeries = (id) => {
@@ -215,29 +224,25 @@ export const getTestPapersByTestSeries = (testSeriesId) => {
 };
 
 export const uploadTestSeriesImage = (id, formData) => {
-  return api.post(`/uploadImage/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return api.post(`/uploadImage/${id}`, formData);
 };
 
 export const updateTestSeriesImage = (id, formData) => {
-  return api.put(`/updateImage/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+  return api.put(`/updateImage/${id}`, formData);
 };
 
 // VT Test paper apis
 // Test Papers APIs
-export const createTestPaper = (data) => {
-  return api.post("/createTestPaper", data);
+export const CreatePaper = (data) => {
+  return api.post("/CreatePaper", data);
 };
 
-export const updateTestPaper = (id, data) => {
-  return api.put(`/updateTestPaper/${id}`, data);
+export const UpdatePaper = (id, data) => {
+  return api.put(`/UpdatePaper/${id}`, data);
 };
 
-export const getTestPaperById = (id) => {
-  return api.get(`/TestPaperById/${id}`);
+export const getPaperById = (id) => {
+  return api.get(`/getPaperById/${id}`);
 };
 export const uploadTestPaperImage = (testPaperId, formData) => {
   return api.post(`/${testPaperId}/uploadTestPaperImage`, formData, {
@@ -251,9 +256,9 @@ export const updateTestPaperImage = (testPaperId, formData) => {
   });
 };
 
-export const getAllTestpapers = () => api.get("/AllTestPapers");
+export const GetAllPapers = () => api.get("/GetAllPapers");
 export const getAllTestSeriesNames = () => api.get("/getAllTestSeriesNames");
-export const deleteTestPaper = (id) => api.delete(`/deleteTestPaper/${id}`);
+export const DeletePaper = (id) => api.delete(`/DeletePaper/${id}`);
 export const getSolvedCount = (testPaperId) => {
   return api.get(`/SolvedTestPaperCount/${testPaperId}`);
 };
@@ -263,9 +268,11 @@ export const getRanking = (testPaperId) =>{
 export const fetchQuestionByTestPaperId = (testPaperId) =>{
   return api.get(`/TestPaperQuestions/${testPaperId}`)
 }
-
+export const getAllPapers = () => {
+  return api.get("/GetAllPapers");
+};
 export const getQuestionsCountBySection = (section) => {
-  return api.get("/questioncountbysection", { params: { section } });
+  return api.get(`/questioncountbysection/${section}`);
 };
 
 export const getTotalQuestionCount = () => {
@@ -273,25 +280,20 @@ export const getTotalQuestionCount = () => {
 };
 
 export const getAllQuestions = () => {
-  return api.get("/AllQuestions");
+  return api.get("/getAllQuestions");
 };
 
-export const createQuestion = (formData) => {
-  return api.post("/addQuestions", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const createQuestion = (data) => {
+  return api.post("/createQuestion", data);
 };
 
-export const updateQuestion = (id, formData) => {
-  return api.put(`/updateQuestion/${id}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+export const updateQuestion = (id, data) => {
+  return api.put(`/updateQuestionById/${id}`, data);
 };
 
 export const deleteQuestion = (id) => {
-  return api.delete(`/deleteQuestion/${id}`);
+  return api.delete(`/DeleteQuestion/${id}`);
 };
-
 // New function for updating showTestResult
 export const updateShowTestResult = async (testPaperId, newShowTestResult) => {
   const response = await api.put(
