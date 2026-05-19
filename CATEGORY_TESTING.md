@@ -191,7 +191,8 @@ Expected: Sections work identically to categories
 
 ```bash
 # Check if backend is running on port 8080
-curl http://localhost:8080/GetAllCategories
+#curl http://localhost:8080/GetAllCategories
+curl https://mahastudy.in/GetAllCategories
 
 # Should return JSON array of categories
 ```

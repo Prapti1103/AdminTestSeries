@@ -145,7 +145,7 @@ Table displays all categories in reverse order (newest first)
 ## Notes
 
 - Categories are displayed in reverse order (newest first)
-- All operations require backend to be running on `http://localhost:8080`
+- All operations require backend to be running on `http://localhost:8080`,`https://mahastudy.in`
 - Token is automatically included in requests via interceptor
 - Error messages from backend are displayed to user
 - Form validation prevents empty submissions

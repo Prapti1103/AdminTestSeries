@@ -85,7 +85,7 @@ Once authenticated with a valid token:
 
 **Backend Requirements:**
 
-- Backend must be running at `http://localhost:8080`
+- Backend must be running at `http://localhost:8080`,`https://mahastudy.in`
 - Login endpoint: `POST /admin/login`
   - Parameters: `email`, `password` (as query params)
   - Returns: `{ token: "JWT_TOKEN" }`
@@ -108,7 +108,7 @@ Once authenticated with a valid token:
 
 If you're still getting 401 errors:
 
-1. **Check backend is running** at `http://localhost:8080`
+1. **Check backend is running** at `http://localhost:8080`,`https://mahastudy.in`
 2. **Verify JWT token is valid** - it should be a proper JWT format
 3. **Check token format** - should include claims and signature
 4. **Ensure backend validates** the Authorization header correctly

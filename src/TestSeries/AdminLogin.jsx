@@ -14,7 +14,8 @@ import axios from "axios";
 const { Title, Text } = Typography;
 
 const loginApi = axios.create({
-  baseURL: "http://localhost:8080",
+  // baseURL: "http://localhost:8080",
+  baseURL: "https://mahastudy.in",
 });
 
 const AdminLogin = ({ onLoginSuccess }) => {

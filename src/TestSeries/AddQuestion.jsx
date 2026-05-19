@@ -28,7 +28,8 @@ import { GetAllCategories } from "./TestSeriesAPI";
 
 const { Option } = Select;
 
-const API_URL = "http://localhost:8080";
+// const API_URL = "http://localhost:8080";
+const API_URL = "https://mahastudy.in";
 
 const api = axios.create({
   baseURL: API_URL,
