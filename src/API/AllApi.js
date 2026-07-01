@@ -1,82 +1,9 @@
-import axios from "axios";
 
-// Use relative path for API calls - Vite proxy will handle routing
-const api = axios.create({
-  baseURL: "/api",
-});
+import api from "./axios";
 
-// Add request interceptor to include token
-api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem("token");
-    const authToken = token?.trim(); // Remove whitespace
-    
-    console.log("🔵 API Request:", config.url);
-    console.log("Token in sessionStorage:", authToken ? `${authToken.substring(0, 20)}...` : "❌ NO TOKEN");
-    
-    if (authToken) {
-      // Check if token already has Bearer prefix
-      const tokenValue = authToken.startsWith("Bearer ") ? authToken : `Bearer ${authToken}`;
-      config.headers.Authorization = tokenValue;
-      console.log("✅ Authorization header set");
-    } else {
-      console.warn("⚠️ NO TOKEN FOUND - User may not be authenticated");
-    }
-    
-    // Ensure Content-Type is set
-    if (!config.headers["Content-Type"]) {
-      config.headers["Content-Type"] = "application/json";
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor to handle token expiration and 403 errors
-api.interceptors.response.use(
-  (response) => {
-    console.log("✅ API Response SUCCESS:", response.config.method.toUpperCase(), response.config.url, response.status);
-    return response;
-  },
-  (error) => {
-    const status = error.response?.status;
-    const url = error.config?.url;
-    const errorMsg = error.response?.data?.message || error.message;
-    
-    console.error(`🔴 HTTP ${status} Error on ${url}:`, errorMsg);
-    console.error("Error details:", error.response?.data);
-    
-    if (status === 401) {
-      console.error("🔴 401 Unauthorized - Token expired or invalid");
-      sessionStorage.removeItem("token");
-      if (window.location.hostname !== 'localhost') {
-        window.location.href = "/admin";
-      }
-    }
-    
-    if (status === 403) {
-      console.error("🔴 403 Forbidden - No valid token or insufficient permissions");
-      console.error("Response data:", error.response?.data);
-      
-      const token = sessionStorage.getItem("token");
-      if (!token) {
-        console.error("⚠️ No token found in sessionStorage! User needs to login.");
-      } else {
-        console.error("Token exists but was rejected. Check if token is valid or expired.");
-      }
-      
-      if (window.location.hostname !== 'localhost') {
-        sessionStorage.removeItem("token");
-        window.location.href = "/admin";
-      }
-    }
-    
-    return Promise.reject(error);
-  }
-);
+export const adminLogin = async (data) => {
+  return api.post("/admin/login", data);
+};
 
 // ================= USERS =================
 

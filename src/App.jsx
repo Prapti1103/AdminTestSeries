@@ -1,54 +1,39 @@
-import { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
 import MainLayout from "./Layout/MainLayout";
 import AdminLogin from "./TestSeries/AdminLogin";
+import ProtectedRoute from "./routes/ProtectedRoute";
 import TestPaperForm from "./TestSeries/TestPaperForm";
 import QuestionsByTestPaperId from "./TestSeries/QuestionsByTestPaperId";
 import RankingByTestPaperId from "./TestSeries/RankingByTestPaperId";
 import UserSolvedTestPapers from "./TestSeries/UserSolvedTestPapers";
 
 function AppContent() {
-  const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  return (
+    <Routes>
+      <Route path="/admin" element={<AdminLogin />} />
 
-  useEffect(() => {
-    // Check if token exists in sessionStorage
-    const token = sessionStorage.getItem("token");
-    setIsAuthenticated(!!token);
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
-
-  const isSpecialRoute = location.pathname.includes('/ebooklayout/test-series-manager/');
-
-  if (isSpecialRoute) {
-    return (
-      <Routes>
+      <Route element={<ProtectedRoute />}>
         <Route path="/ebooklayout/test-series-manager/test-paper-form" element={<TestPaperForm />} />
         <Route path="/ebooklayout/test-series-manager/test-paper-form/:id" element={<TestPaperForm />} />
         <Route path="/ebooklayout/test-series-manager/test-paper-questions/:id" element={<QuestionsByTestPaperId />} />
         <Route path="/ebooklayout/test-series-manager/test-paper-ranking/:id" element={<RankingByTestPaperId />} />
         <Route path="/ebooklayout/test-series-manager/solved-paper/:id" element={<UserSolvedTestPapers />} />
-      </Routes>
-    );
-  }
+        <Route path="*" element={<MainLayout />} />
+      </Route>
 
-  return <MainLayout />;
+      <Route path="/" element={<Navigate to="/admin" replace />} />
+    </Routes>
+  );
 }
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

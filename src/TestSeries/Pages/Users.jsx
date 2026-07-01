@@ -11,7 +11,7 @@ import {
   message,
   Card,
 } from "antd";
-import { getAllUsers, createUser } from "../../API/AllApi";
+import { getAllUsers, createUser } from "../../api/AllApi";
 
 export default function Users() {
   const [users, setUsers] = useState([]);

@@ -308,7 +308,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Table, Typography, Input, Row, Col, Select } from "antd";
 import { EyeOutlined, SearchOutlined } from "@ant-design/icons";
-import { getAllUsers } from "../API/AllApi.js";
+import { getAllUsers } from "../api/AllApi.js";
 import { useNavigate } from "react-router-dom";
 
 const SolvedTestPaper = () => {

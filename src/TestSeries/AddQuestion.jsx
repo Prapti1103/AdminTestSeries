@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 
 import {
   Table,
@@ -27,47 +27,6 @@ import {
 import { GetAllCategories } from "./TestSeriesAPI";
 
 const { Option } = Select;
-
-// const API_URL = "http://localhost:8080";
-const API_URL = "https://mahastudy.in";
-
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-api.interceptors.request.use(
-  (config) => {
-
-    const token = sessionStorage.getItem("token");
-
-   if (token) {
-  config.headers.Authorization = `Bearer ${token}`;
-}
-
-    return config;
-  },
-
-  (error) => Promise.reject(error)
-);
-
-api.interceptors.response.use(
-  (response) => response,
-
-  (error) => {
-
-    if (
-      error.response &&
-      error.response.status === 401
-    ) {
-
-      sessionStorage.removeItem("token");
-
-      window.location.href = "/admin";
-    }
-
-    return Promise.reject(error);
-  }
-);
 
 const AddQuestion = () => {
 

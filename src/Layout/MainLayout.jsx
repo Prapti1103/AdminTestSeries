@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { Layout, Menu } from "antd";
-
+import { Layout, Menu, Dropdown, Avatar } from "antd";
+import { useNavigate } from "react-router-dom";
+import AuthService from "../services/authService";
+import AdminProfile from "../TestSeries/Pages/AdminProfile";
 import {
-  AppstoreOutlined,
   UserOutlined,
+  LogoutOutlined,
+  ProfileOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 
 import TestSeries from "../TestSeries/TestSeries";
@@ -14,6 +18,7 @@ import "./layout.css";
 const { Header, Sider, Content } = Layout;
 
 const MainLayout = () => {
+  const navigate = useNavigate();
 
   // DEFAULT PAGE
   const [activeTab, setActiveTab] =
@@ -48,6 +53,27 @@ const MainLayout = () => {
       label: "Users",
     },
   ];
+
+  const userMenuItems = [
+    {
+      key: "profile",
+      icon: <ProfileOutlined />,
+      label: "Admin Profile",
+    },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Logout",
+    },
+  ];
+
+  const handleUserMenuClick = ({ key }) => {
+    if (key === "profile") {
+      setActiveTab("profile");
+    } else if (key === "logout") {
+      AuthService.logout();
+    }
+  };
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -102,11 +128,21 @@ const MainLayout = () => {
             </div>
 
             <div className="user">
-
-              <div className="circle">
-                U
-              </div>
-
+              <Dropdown
+                menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
+                trigger={["click", "hover"]}
+                placement="bottomRight"
+                arrow
+              >
+                <Avatar
+                  size="large"
+                  icon={<UserOutlined />}
+                  style={{
+                    backgroundColor: "#1f4f8a",
+                    cursor: "pointer",
+                  }}
+                />
+              </Dropdown>
             </div>
 
           </div>
@@ -114,7 +150,7 @@ const MainLayout = () => {
         </Header>
 
         {/* TABS */}
-        {activeTab !== "users" && (
+        {activeTab !== "users" && activeTab !== "profile" && (
 
           <div className="tabs-wrapper">
 
@@ -153,6 +189,8 @@ const MainLayout = () => {
 
           {activeTab === "users" ? (
             <Users />
+          ) : activeTab === "profile" ? (
+            <AdminProfile />
           ) : (
             <TestSeries
               activeTab={activeTab}
