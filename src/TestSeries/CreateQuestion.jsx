@@ -21,7 +21,7 @@ import {
   createQuestion,
   updateQuestion,
   deleteQuestion,
-  getAllPapers,
+  // getAllPapers,
 } from "./TestSeriesAPI";
 
 import MathLiveInput from "./MathLiveInput";
@@ -34,7 +34,7 @@ const CreateQuestion = () => {
   const [form] = Form.useForm();
 
   const [sections, setSections] = useState([]);
-  const [papers, setPapers] = useState([]);
+  // const [papers, setPapers] = useState([]);
   const [questions, setQuestions] = useState([]);
 
   const [showForm, setShowForm] = useState(false);
@@ -95,21 +95,21 @@ const CreateQuestion = () => {
 
       });
 
-    getAllPapers()
-      .then((res) => {
+    // getAllPapers()
+    //   .then((res) => {
 
-        setPapers(res.data);
+    //     setPapers(res.data);
 
-      })
-      .catch(() => {
+    //   })
+    //   .catch(() => {
 
-        Swal.fire(
-          "Error",
-          "Failed to fetch papers",
-          "error"
-        );
+    //     Swal.fire(
+    //       "Error",
+    //       "Failed to fetch papers",
+    //       "error"
+    //     );
 
-      });
+    //   });
 
     fetchQuestions();
 
@@ -120,18 +120,24 @@ const CreateQuestion = () => {
 
     try {
 
+      // const payload = {
+
+      //   ...values,
+
+      //   section: values.section
+      //     ? JSON.parse(values.section)
+      //     : null,
+
+      //   paper: values.paper
+      //     ? JSON.parse(values.paper)
+      //     : null,
+      // };
       const payload = {
-
-        ...values,
-
-        section: values.section
-          ? JSON.parse(values.section)
-          : null,
-
-        paper: values.paper
-          ? JSON.parse(values.paper)
-          : null,
-      };
+  ...values,
+  section: values.section
+    ? JSON.parse(values.section)
+    : null,
+};
 
       console.log("QUESTION PAYLOAD:", payload);
 
@@ -184,14 +190,18 @@ const CreateQuestion = () => {
   // EDIT
   const handleEdit = (question) => {
 
+    // form.setFieldsValue({
+
+    //   ...question,
+
+    //   section: JSON.stringify(question.section),
+
+    //   paper: JSON.stringify(question.paper),
+    // });
     form.setFieldsValue({
-
-      ...question,
-
-      section: JSON.stringify(question.section),
-
-      paper: JSON.stringify(question.paper),
-    });
+  ...question,
+  section: JSON.stringify(question.section),
+});
 
     setShowForm(true);
 
@@ -426,7 +436,7 @@ const CreateQuestion = () => {
 
                 </Col>
 
-                <Col span={8}>
+                {/* <Col span={8}>
 
                   <Form.Item
                     label="Paper"
@@ -455,7 +465,7 @@ const CreateQuestion = () => {
 
                   </Form.Item>
 
-                </Col>
+                </Col> */}
 
               </Row>
 
@@ -642,12 +652,12 @@ const CreateQuestion = () => {
               record.section?.name || "N/A",
           },
 
-          {
-            title: "Paper",
+          // {
+          //   title: "Paper",
 
-            render: (_, record) =>
-              record.paper?.name || "N/A",
-          },
+          //   render: (_, record) =>
+          //     record.paper?.name || "N/A",
+          // },
 
           {
             title: "Actions",
